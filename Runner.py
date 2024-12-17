@@ -5,15 +5,18 @@
 
 from graphics import *
 
+from GUI import GUI
+
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
 
-WIDTH_OFFSET = 300
+WIDTH_OFFSET = 200
 
 def main():
+    my_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET)
+    my_GUI.setup()
 
-    win = GraphWin("Santorini", SCREEN_WIDTH + WIDTH_OFFSET, SCREEN_HEIGHT)
-
+    win = my_GUI.get_window()
     while True:
         mouse = win.checkMouse()
         if mouse != None:
