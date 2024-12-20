@@ -11,7 +11,7 @@ from GameObjects.Space import Space
 
 class GUI:
     def __init__(self, _height, _width, _off):
-        self.Game = Game(Player(-1,-1,1), Player(-1,-1,2))
+        self.Game = Game()
         self.Board = Board(_width, _height)
         self.screen_height = _height
         self.screen_width = _width
@@ -38,7 +38,7 @@ class GUI:
         self.window = win
         return self.get_window()
 
-    def start_game(self):
+    def setup_game(self):
         win = self.get_window()
 
         text_point = Point(self.screen_width / 2, self.screen_height)
@@ -60,12 +60,16 @@ class GUI:
                 if self.Board.valid_for_player_start(chosen_cell.getX(), chosen_cell.getY()):
 
                     middle_spot = self.Board.get_selected_display(chosen_cell)
-                    self.Game.set_grid_spot(chosen_cell)
+                    self.Board.set_grid_spot(chosen_cell, pieces[i])
 
                     self.Game.pick_character_spot(middle_spot, i).draw(win)
 
                     break
                 else:
                     continue
+
+    def start_game(self):
+
+
 
 

@@ -16,3 +16,6 @@ class Space:
 
     def getY(self):
         return self.y
+
+    def set_player(self, num):
+        self.playerNum = num

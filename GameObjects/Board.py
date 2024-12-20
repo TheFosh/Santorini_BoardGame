@@ -78,9 +78,11 @@ class Board:
 
         return Space(chosen_x, chosen_y)
 
-
     def get_selected_display(self, cord_spot):
         """Converts given grid coordinates into display coordinates."""
         display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing)
         display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing)
         return Space(display_x_cord, display_y_cord)
+
+    def set_grid_spot(self, chosen_space, player_num):
+        self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)

@@ -2,21 +2,19 @@
 ## of Santorini                                       ##
 ########################################################
 ## Author: Jake Swanson
+from GameObjects.Board import Board
+from GameObjects.Player import Player
 
 
 class Game:
-    def __init__(self, p1, p2):
+    def __init__(self):
         self.player_start_order = [1,2,2,1]
         self.all_players = []
         for i in range(len(self.player_start_order)):
             if self.player_start_order[i] == 1:
-                self.all_players.append(p1)
+                self.all_players.append(Player(-1,-1,1))
             elif self.player_start_order[i] == 2:
-                self.all_players.append(p2)
-
-
-    def start_game(self):
-        return True
+                self.all_players.append(Player(-1,-1,2))
 
     def get_order(self):
         return self.player_start_order
