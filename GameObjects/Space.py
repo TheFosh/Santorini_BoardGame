@@ -10,3 +10,9 @@ class Space:
         self.playerNum = 0  # Player num in space. 0 = No one
         self.level = 0      # Floor Level
 
+
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y

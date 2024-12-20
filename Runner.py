@@ -6,17 +6,21 @@
 from graphics import *
 
 from GUI import GUI
+from Game import Game
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
+WIDTH_OFFSET = 50
 
-WIDTH_OFFSET = 200
+GAME = Game()
+GAME_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET)
 
 def main():
-    my_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET)
-    my_GUI.setup()
+    GAME_GUI.setup()
+    GAME_GUI.start_game()
 
-    win = my_GUI.get_window()
+    win = GAME_GUI.get_window()
+
     while True:
         mouse = win.checkMouse()
         if mouse != None:

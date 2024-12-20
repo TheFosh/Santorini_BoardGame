@@ -2,11 +2,14 @@
 ## of Santorini                                       ##
 ########################################################
 ## Author: Jake Swanson
-from GameObjects.Board import Board
 
 
 class Game:
     def __init__(self):
-        self.board = Board()
-        self.all_player_pieces = []
+        self.all_player_pieces = [1,2,2,1]
 
+    def start_game(self):
+        return True
+
+    def get_players(self):
+        return self.all_player_pieces

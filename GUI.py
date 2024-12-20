@@ -1,70 +1,60 @@
 ## Object for setting up the Graphical User Interface ##
 ########################################################
 ## Author: Jake Swanson
+from math import floor
 from Game import Game
 from graphics import *
+from GameObjects.Board import Board
+
 
 class GUI:
     def __init__(self, _height, _width, _off):
         self.Game = Game()
+        self.Board = Board(_width, _height)
         self.screen_height = _height
         self.screen_width = _width
         self.screen_offset = _off
-        self.window = GraphWin("Santorini", _width + _off, _height)
+        self.board_padding = 30
+        self.window = GraphWin("Santorini", _width, _height + _off)
 
     def get_window(self):
         return self.window
 
+    def get_screen_width(self):
+        return self.screen_width
+
+    def get_screen_height(self):
+        return self.screen_height
+
     def setup(self):
         win = self.window
-        ## Background set to a nice blue
+        # Background set to a nice blue
         win.setBackground(color_rgb(108, 158, 240))
 
-        ## Displaying the board relative to the right side of the screen
-        BOARD_PADDING = 30
-        board_dimension = self.screen_width - 2 * BOARD_PADDING
-
-        ul_board = Point(0 + BOARD_PADDING, 0+BOARD_PADDING)
-        br_board = Point(self.screen_width - BOARD_PADDING, self.screen_height - BOARD_PADDING)
-
-        display_board = Rectangle(ul_board, br_board)
-
-        display_board.setFill(color_rgb(81, 237, 94))
-        display_board.setOutline(color="white")
-
-        display_board.draw(win)
-
-        ## Displaying the grid of cells on the board
-        GRID_COUNT = 6
-        COLUMN_WIDTH = 10
-        column_spacing = (board_dimension - (GRID_COUNT * COLUMN_WIDTH)) / (GRID_COUNT-1)
-
-
-        horizontal_grid = [Rectangle
-                                (Point(0 + BOARD_PADDING,
-                                       column_spacing * i + COLUMN_WIDTH * i + BOARD_PADDING),
-                                Point(self.screen_width - BOARD_PADDING,
-                                      column_spacing * i + COLUMN_WIDTH * i + COLUMN_WIDTH + BOARD_PADDING))
-                         for i in range(GRID_COUNT)]
-        vertical_grid = [Rectangle
-                            (Point(column_spacing * i + COLUMN_WIDTH * i + BOARD_PADDING,
-                                   0 + BOARD_PADDING),
-                             Point(column_spacing * i + COLUMN_WIDTH * i + COLUMN_WIDTH + BOARD_PADDING,
-                                   self.screen_height - BOARD_PADDING)
-                            )
-
-                         for i in range(GRID_COUNT)]
-
-        for i in range(GRID_COUNT):
-            v_current_rec = vertical_grid[i]
-            h_current_rec = horizontal_grid[i]
-
-            v_current_rec.setFill(color="white")
-            h_current_rec.setFill(color="white")
-
-            v_current_rec.draw(win)
-            h_current_rec.draw(win)
+        win = self.Board.get_display(self.get_screen_width(), self.get_screen_height(), win)
 
         ## Setting and returning the new window to the current one
         self.window = win
         return self.get_window()
+
+    def start_game(self):
+        win = self.get_window()
+
+        text_point = Point(self.screen_width / 2, self.screen_height)
+        instruction_message = ""
+        instruction_display = Text(text_point, instruction_message)
+        instruction_display.draw(win)
+
+        pieces = self.Game.get_players()
+        for i in range(len(pieces)):
+            instruction_message = "Player " + str(pieces[i]) + ", select position for piece: "
+            instruction_display.setText(instruction_message)
+
+            while True:
+                mouse = win.getMouse()
+                chosen_cell = self.Board.validate_board_space(mouse)
+
+                if self.Board.valid_for_player_start(chosen_cell.getX(), chosen_cell.getY()):
+                    break
+
+
