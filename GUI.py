@@ -5,16 +5,17 @@ from math import floor
 from Game import Game
 from graphics import *
 from GameObjects.Board import Board
+from GameObjects.Player import Player
+from GameObjects.Space import Space
 
 
 class GUI:
     def __init__(self, _height, _width, _off):
-        self.Game = Game()
+        self.Game = Game(Player(-1,-1,1), Player(-1,-1,2))
         self.Board = Board(_width, _height)
         self.screen_height = _height
         self.screen_width = _width
         self.screen_offset = _off
-        self.board_padding = 30
         self.window = GraphWin("Santorini", _width, _height + _off)
 
     def get_window(self):
@@ -45,16 +46,26 @@ class GUI:
         instruction_display = Text(text_point, instruction_message)
         instruction_display.draw(win)
 
-        pieces = self.Game.get_players()
+        pieces = self.Game.get_order()
         for i in range(len(pieces)):
             instruction_message = "Player " + str(pieces[i]) + ", select position for piece: "
             instruction_display.setText(instruction_message)
 
+            ## Loops until all characters are validly placed
             while True:
                 mouse = win.getMouse()
                 chosen_cell = self.Board.validate_board_space(mouse)
 
+                ## Checks if picked spot is valid
                 if self.Board.valid_for_player_start(chosen_cell.getX(), chosen_cell.getY()):
+
+                    middle_spot = self.Board.get_selected_display(chosen_cell)
+                    self.Game.set_grid_spot(chosen_cell)
+
+                    self.Game.pick_character_spot(middle_spot, i).draw(win)
+
                     break
+                else:
+                    continue
 
 

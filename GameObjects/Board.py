@@ -23,8 +23,8 @@ class Board:
         self.column_spacing = (self.board_dimensions - ((self.WIDTH + 1) * self.COLUMN_WIDTH)) / self.WIDTH
 
     def valid_for_player_start(self, _x, _y):
-        return (self.WIDTH >= _x >= 0 and
-                self.HEIGHT >= _y >= 0 and
+        return (self.WIDTH > _x >= 0 and
+                self.HEIGHT > _y >= 0 and
                 self.grid[_x][_y].playerNum == 0)
 
     def get_display(self, screen_w, screen_h, win):
@@ -77,3 +77,10 @@ class Board:
         chosen_y = floor((selected_point.getY() - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
 
         return Space(chosen_x, chosen_y)
+
+
+    def get_selected_display(self, cord_spot):
+        """Converts given grid coordinates into display coordinates."""
+        display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing)
+        display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing)
+        return Space(display_x_cord, display_y_cord)
