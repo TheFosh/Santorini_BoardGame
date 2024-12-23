@@ -19,3 +19,15 @@ class Space:
 
     def set_player(self, num):
         self.playerNum = num
+
+    def get_player(self):
+        return self.playerNum
+
+    def build_level(self):
+        if self.level < 4:
+            self.level += 1
+
+        return self.level < 4
+
+    def get_level(self):
+        return self.level

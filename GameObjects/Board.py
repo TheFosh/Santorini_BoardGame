@@ -2,87 +2,46 @@
 #######################################################
 ## Author: Jake Swanson
 from math import floor
-
-from graphics import *
-
 from GameObjects.Space import Space
 
 class Board:
-    WIDTH = 5
-    HEIGHT = 5
-    COLUMN_WIDTH = 10
-    BOARD_PADDING = 30
-
-    def __init__(self, screen_w, screen_h):
+    def __init__(self, screen_w, screen_h, cell_count):
+        self.WIDTH = cell_count
+        self.HEIGHT = cell_count
         self.grid = [
                         [Space(i, j) for i in range(self.WIDTH)]
                         for j in range(self.HEIGHT)
                     ]
 
-        self.board_dimensions = screen_w - 2 * self.BOARD_PADDING
-        self.column_spacing = (self.board_dimensions - ((self.WIDTH + 1) * self.COLUMN_WIDTH)) / self.WIDTH
+    ########################################
+    ########### GETTERS & SETTERS ##########
+    def get_width_height(self):
+        return self.WIDTH
+
+    def get_chosen_grid_space(self, chosen_space):
+        """Given a point, the corresponding grid space is returned"""
+        return self.grid[chosen_space.getX()][chosen_space.getY()]
+
+    def set_grid_player(self, chosen_space, player_num):
+        self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
+    ########################################
 
     def valid_for_player_start(self, _x, _y):
-        return (self.WIDTH > _x >= 0 and
-                self.HEIGHT > _y >= 0 and
+        print(_x)
+        print(_y)
+        return (self.space_on_board(_x, _y) and
                 self.grid[_x][_y].playerNum == 0)
 
-    def get_display(self, screen_w, screen_h, win):
-        # Displaying the board relative to the right side of the screen
+    def space_on_board(self, _x, _y):
+        return (self.WIDTH > _x >= 0 and
+                self.HEIGHT > _y >= 0)
 
-        ul_board = Point(0 + self.BOARD_PADDING, self.BOARD_PADDING)
-        br_board = Point(screen_w - self.BOARD_PADDING, screen_h - self.BOARD_PADDING)
-
-        display_board = Rectangle(ul_board, br_board)
-
-        display_board.setFill(color_rgb(81, 237, 94))
-
-        display_board.draw(win)
-
-        # Displaying the grid of cells on the board
-
-        ## For the bars that are tall. Horizontal refers to how they are spaced.
-        horizontal_grid = [Rectangle
-                           (Point(0 + self.BOARD_PADDING,
-                                  self.column_spacing * i + self.COLUMN_WIDTH * i + self.BOARD_PADDING),
-                            Point(screen_w - self.BOARD_PADDING,
-                                  self.column_spacing * i + self.COLUMN_WIDTH * i + self.COLUMN_WIDTH + self.BOARD_PADDING))
-                           for i in range(self.WIDTH + 1)]
-
-        ## For the bars that are long. Vertical refers to how they are spaced.
-        vertical_grid = [Rectangle
-                         (Point(self.column_spacing * i + self.COLUMN_WIDTH * i + self.BOARD_PADDING,
-                                0 + self.BOARD_PADDING),
-                          Point(self.column_spacing * i + self.COLUMN_WIDTH * i + self.COLUMN_WIDTH + self.BOARD_PADDING,
-                                screen_h - self.BOARD_PADDING)
-                          )
-
-                         for i in range(self.HEIGHT + 1)]
-
-        ## Drawing all bars
-        for i in range(self.WIDTH + 1):
-            v_current_rec = vertical_grid[i]
-            h_current_rec = horizontal_grid[i]
-
-            v_current_rec.setFill(color="white")
-            h_current_rec.setFill(color="white")
-
-            v_current_rec.draw(win)
-            h_current_rec.draw(win)
-
-        return win
-
-    def validate_board_space(self, selected_point):
-        chosen_x = floor((selected_point.getX() - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
-        chosen_y = floor((selected_point.getY() - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
-
-        return Space(chosen_x, chosen_y)
-
-    def get_selected_display(self, cord_spot):
-        """Converts given grid coordinates into display coordinates."""
-        display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing)
-        display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing)
-        return Space(display_x_cord, display_y_cord)
-
-    def set_grid_spot(self, chosen_space, player_num):
-        self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
+    def valid_player_select(self, given_space, correct_num):
+        """
+        Returns whether a player figure is
+        in the selected spot and is the correct
+        number.
+        """
+        valid_space = self.space_on_board(given_space.getX(), given_space.getY())
+        correct_player = self.grid[given_space.getX()][given_space.getY()].get_player() == correct_num
+        return valid_space and correct_player
