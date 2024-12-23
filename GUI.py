@@ -2,7 +2,7 @@
 ########################################################
 ## Author: Jake Swanson
 from math import floor
-from Game import Game
+from GameObjects.Game import Game
 from graphics import *
 
 from GameObjects.Space import Space

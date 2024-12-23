@@ -3,10 +3,7 @@
 ########################################
 ### Author: Jake Swanson
 
-from graphics import *
-
 from GUI import GUI
-from Game import Game
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
