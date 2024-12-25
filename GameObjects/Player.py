@@ -1,18 +1,32 @@
 ## Object representing a player in the game ##
 ##############################################
 ## Author: Jake Swanson
+from dis import disco
+
 from graphics import *
+from GameObjects.Space import Space
 
 
-class Player:
+class Player(Space):
     def __init__(self, _x, _y, _l):
-        self.x_cord = _x
-        self.y_cord = _y
-        self.label = _l
+        super().__init__(_x, _y)
+        self.playerNum = _l
 
     ## Makes the display of a player as a circle
 
     def set_space(self, given_spot):
-        self.x_cord = given_spot.getX()
-        self.y_cord = given_spot.getY()
+        self.x = given_spot.getX()
+        self.y = given_spot.getY()
+
+    def get_display(self, display_location):
+        # Player will be discs of a certain color depending on the player num
+        RADIUS = 30
+        player_display = Circle(Point(display_location.getX(),display_location.getY()), RADIUS)
+
+        if self.playerNum == 1:
+            player_display.setFill(color="blue")
+        if self.playerNum == 2:
+            player_display.setFill(color="gray")
+
+        return player_display
 

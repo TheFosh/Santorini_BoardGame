@@ -21,6 +21,18 @@ class Game:
 
     def get_board(self):
         return self.Board
+
+    def get_player(self, spot):
+        """
+        Looks through all players for the correct one.
+        Returns the index in which it was found. Returns -1 if none is found.
+        """
+        for i in range(len(self.all_players)):
+            player = self.all_players[i]
+            if spot.getX() == player.getX() and spot.getY() == player.getY():
+                return i
+
+        return -1
     ########################################
 
     def pick_player_spot(self, chosen_cell, player_num):
@@ -29,16 +41,29 @@ class Game:
         it is checked if the spot chosen can be a valid starting spot for
         the player.
         If it is valid, it will return true while also setting the player
-        to the chosen spot
+        to the chosen spot. Also, will add it to the list of players.
         If not, it will ONLY return false.
         """
         if self.Board.valid_for_player_start(chosen_cell.getX(), chosen_cell.getY()):
             self.Board.set_grid_player(chosen_cell, player_num)
+            self.all_players.append(Player(chosen_cell.getX(),chosen_cell.getY(), player_num))
             return True
         else:
             return False
 
-    def pick_character_spot(self, picked_space, player_iter):
-        """Sets the player with its given point and returns it's display"""
+    def set_character_spot(self, picked_space, player_iter):
+        """Sets the player with its given point."""
         self.all_players[player_iter].set_space(picked_space)
-        return self.all_players[player_iter].get_display()
+
+    def add_player(self, x, y, l):
+        current_player = Player(x,y,l)
+        self.all_players.append(current_player)
+        return current_player
+
+    def move_action(self, player_index):
+        """
+        Given an integer for a player in all_players,
+        the move action of the game is preformed.
+        """
+        current_player = self.all_players[player_index]
+        possible_move_locations = self.Board.get_move_locations(current_player)

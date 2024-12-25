@@ -27,8 +27,6 @@ class Board:
     ########################################
 
     def valid_for_player_start(self, _x, _y):
-        print(_x)
-        print(_y)
         return (self.space_on_board(_x, _y) and
                 self.grid[_x][_y].playerNum == 0)
 
@@ -45,3 +43,25 @@ class Board:
         valid_space = self.space_on_board(given_space.getX(), given_space.getY())
         correct_player = self.grid[given_space.getX()][given_space.getY()].get_player() == correct_num
         return valid_space and correct_player
+
+    def get_move_locations(self, starting_location):
+        possible_locations = []
+        starting_x = starting_location.getX() + 1
+        starting_y = starting_location.getY() + 1
+
+        if self.space_on_board(starting_x, starting_y):
+            possible_locations.append(Space(starting_x, starting_y))
+
+        RANGE_AROUND_POINT = 9
+        for i in range(RANGE_AROUND_POINT):
+            ## X direction
+            ## Y direction
+            spot_checked = None
+            if i / 2 < 1 and self.space_on_board(starting_x, starting_y):
+
+            elif i / 2 < 2:
+
+            elif i / 2 < 3:
+
+
+        return possible_locations
