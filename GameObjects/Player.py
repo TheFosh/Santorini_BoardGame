@@ -1,7 +1,6 @@
 ## Object representing a player in the game ##
 ##############################################
 ## Author: Jake Swanson
-from dis import disco
 
 from graphics import *
 from GameObjects.Space import Space

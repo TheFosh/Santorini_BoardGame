@@ -120,8 +120,8 @@ class GUI:
                 ## Checks if picked spot is valid
                 if self.Game.pick_player_spot(chosen_cell, pieces[i]):
                     middle_spot = self.get_selected_display(chosen_cell)
-                    added_player = self.Game.add_player(chosen_cell.getX(), chosen_cell.getY(), pieces[i])
-
+                    added_player_index = self.Game.get_player_at_spot(chosen_cell)
+                    added_player = self.Game.get_player_at_index(added_player_index)
                     current_display = added_player.get_display(middle_spot)
                     self.player_displays.append(current_display)
 
@@ -153,7 +153,6 @@ class GUI:
         """
         while True:
             for i in range(floor(len(self.Game.get_order()) / 2)):
-                print(floor(len(self.Game.get_order()) / 2))
                 current_board = self.Game.get_board()
                 picked_player = -1
                 while True:
@@ -162,9 +161,13 @@ class GUI:
                     if current_board.valid_player_select(chosen_point, i + 1):
                         ## Successfully chosen a player
                         chosen_player_piece = current_board.get_chosen_grid_space(chosen_point)
-                        win = self.get_window()
-                        picked_player = self.Game.get_player(chosen_player_piece)
-                        self.player_displays[picked_player].setFill(color="red")
+                        picked_player = self.Game.get_player_at_spot(chosen_player_piece)
+                        ## self.player_displays[picked_player].setFill(color="red")
                         break
 
-                self.Game.move_action(picked_player)
+                move_options = self.Game.get_move_spots(picked_player)
+                print(str(len(move_options)))
+
+                """while True:
+                    if self.Game.move_player(picked_player, move_options):
+                        break"""

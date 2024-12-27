@@ -22,7 +22,7 @@ class Game:
     def get_board(self):
         return self.Board
 
-    def get_player(self, spot):
+    def get_player_at_spot(self, spot):
         """
         Looks through all players for the correct one.
         Returns the index in which it was found. Returns -1 if none is found.
@@ -33,6 +33,9 @@ class Game:
                 return i
 
         return -1
+
+    def get_player_at_index(self, player_index):
+        return self.all_players[player_index]
     ########################################
 
     def pick_player_spot(self, chosen_cell, player_num):
@@ -44,9 +47,9 @@ class Game:
         to the chosen spot. Also, will add it to the list of players.
         If not, it will ONLY return false.
         """
-        if self.Board.valid_for_player_start(chosen_cell.getX(), chosen_cell.getY()):
+        if self.Board.valid_for_open_space(chosen_cell.getX(), chosen_cell.getY()):
             self.Board.set_grid_player(chosen_cell, player_num)
-            self.all_players.append(Player(chosen_cell.getX(),chosen_cell.getY(), player_num))
+            self.add_player(chosen_cell.getX(),chosen_cell.getY(), player_num)
             return True
         else:
             return False
@@ -58,12 +61,12 @@ class Game:
     def add_player(self, x, y, l):
         current_player = Player(x,y,l)
         self.all_players.append(current_player)
-        return current_player
 
-    def move_action(self, player_index):
+    def get_move_spots(self, player_index):
         """
         Given an integer for a player in all_players,
         the move action of the game is preformed.
         """
         current_player = self.all_players[player_index]
-        possible_move_locations = self.Board.get_move_locations(current_player)
+        possible_move_locations = self.Board.get_spaces_around(current_player)
+        return possible_move_locations

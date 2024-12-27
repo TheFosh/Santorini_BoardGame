@@ -15,7 +15,7 @@ GAME_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET, BOARD_CELL_COUNT)
 def main():
     GAME_GUI.setup()
     GAME_GUI.setup_game()
-    GAME_GUI.start_game() # Gives number of players
+    GAME_GUI.start_game()
 
     win = GAME_GUI.get_window()
 
