@@ -10,6 +10,12 @@ class Space:
         self.playerNum = 0  # Player num in space. 0 = No one
         self.level = 0      # Floor Level
 
+    def __repr__(self):
+        return ("x - " + str(self.x) +
+                " y - " + str(self.y) +
+                " pnum - " + str(self.playerNum) +
+                " l - " + str(self.level)) + "\n"
+
     def getX(self):
         return self.x
 
@@ -30,3 +36,7 @@ class Space:
 
     def get_level(self):
         return self.level
+
+    def set_cords(self, _x, _y):
+        self.x = _x
+        self.y = _y

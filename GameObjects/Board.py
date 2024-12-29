@@ -11,7 +11,7 @@ class Board:
         self.HEIGHT = cell_count
 
         self.grid = [
-                        [Space(i, j) for i in range(self.WIDTH)]
+                        [Space(j, i) for i in range(self.WIDTH)]
                         for j in range(self.HEIGHT)
                     ]
 
@@ -22,7 +22,7 @@ class Board:
 
     def get_chosen_grid_space(self, chosen_space):
         """Given a point, the corresponding grid space is returned"""
-        return self.grid[chosen_space.getY()][chosen_space.getX()] ## Y VALUE FIRST THEN X FOR
+        return self.grid[chosen_space.getX()][chosen_space.getY()]
 
     def set_grid_player(self, chosen_space, player_num):
         self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
@@ -43,7 +43,6 @@ class Board:
         in the selected spot and is the correct
         number.
         """
-        print(str(given_space.getX()) + ", " + str(given_space.getY()))
         valid_space = False
         correct_player = False
         if self.space_on_board(given_space.getX(), given_space.getY()):
@@ -63,7 +62,7 @@ class Board:
         RANGE_AROUND_POINT = 8
         for i in range(RANGE_AROUND_POINT):
             ## Coordinates for spot changes over time to loop around the spot.
-            print(str(starting_x) +", " + str(starting_y))
+            ########print(str(starting_x) +", " + str(starting_y))
             if i / 2 < 1:
                 starting_x -= 1
             elif i / 2 < 2:
@@ -75,11 +74,13 @@ class Board:
             valid_spot = self.valid_for_open_space(starting_x, starting_y)
 
             if valid_spot:
-                current_spot = self.grid[starting_y][starting_x]
+                current_spot = self.grid[starting_x][starting_y]
                 good_height = self.is_too_tall(current_spot, starting_level)
-                #print(valid_spot)
-                #print(too_tall)
                 if good_height:
                     possible_locations.append(current_spot)
 
         return possible_locations
+
+    def update_player_space(self, player, new_spot):
+        self.grid[player.getX()][player.getY()].set_player(0)
+        self.grid[new_spot.getX()][new_spot.getY()].set_player(player.get_player())

@@ -151,7 +151,9 @@ class GUI:
         First for loops through players to simulate taking turns.
 
         """
+        num_count = 1
         while True:
+            print("This is turn " + str(num_count))
             for i in range(floor(len(self.Game.get_order()) / 2)):
                 current_board = self.Game.get_board()
                 picked_player = -1
@@ -162,12 +164,26 @@ class GUI:
                         ## Successfully chosen a player
                         chosen_player_piece = current_board.get_chosen_grid_space(chosen_point)
                         picked_player = self.Game.get_player_at_spot(chosen_player_piece)
-                        ## self.player_displays[picked_player].setFill(color="red")
                         break
 
                 move_options = self.Game.get_move_spots(picked_player)
-                print(str(len(move_options)))
+                while True:
+                    picked_location = self.ask_for_grid_point(self.get_window())
+                    if self.Game.spot_in_list(picked_location, move_options):
+                        current_player_display = self.player_displays[picked_player].getCenter()
+                        old_display_x = current_player_display.getX()
+                        old_display_y = current_player_display.getY()
+                        new_display_x = self.get_selected_display(picked_location).getX()
+                        new_display_y = self.get_selected_display(picked_location).getY()
+                        self.Game.move_player(picked_player, picked_location)
+                        self.player_displays[picked_player].move(new_display_x - old_display_x, new_display_y - old_display_y)
+                        break
 
-                """while True:
-                    if self.Game.move_player(picked_player, move_options):
+                """build_options = self.Game.get_build_spots(picked_player)
+                while True:
+                    picked_location = self.ask_for_grid_point(self.get_window())
+                    if self.Game.spot_in_list(picked_location, build_options):
+                        self.Game.build_at_spot(picked_location)
                         break"""
+
+            num_count += 1
