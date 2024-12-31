@@ -81,6 +81,14 @@ class Board:
 
         return possible_locations
 
+    def move_filter(self, possible_spots, starting_location):
+        filtered_list = []
+        for spot in possible_spots:
+            if self.is_too_tall(spot, starting_location):
+                filtered_list.append(spot)
+
+        return filtered_list
+
     def update_player_space(self, player, new_spot):
         self.grid[player.getX()][player.getY()].set_player(0)
         self.grid[new_spot.getX()][new_spot.getY()].set_player(player.get_player())

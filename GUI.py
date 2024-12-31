@@ -179,11 +179,11 @@ class GUI:
                         self.player_displays[picked_player].move(new_display_x - old_display_x, new_display_y - old_display_y)
                         break
 
-                """build_options = self.Game.get_build_spots(picked_player)
+                build_options = self.Game.get_build_spots(picked_player)
                 while True:
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, build_options):
                         self.Game.build_at_spot(picked_location)
-                        break"""
+                        break
 
             num_count += 1

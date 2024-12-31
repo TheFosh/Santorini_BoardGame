@@ -69,6 +69,7 @@ class Game:
         """
         current_player = self.all_players[player_index]
         possible_move_locations = self.Board.get_spaces_around(current_player)
+        possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
         return possible_move_locations
 
     def move_player(self, picked_player, picked_location):
@@ -82,7 +83,11 @@ class Game:
         self.Board.update_player_space(current_player, picked_location)
         self.all_players[picked_player].set_cords(picked_location.getX(), picked_location.getY())
 
+    def get_build_spots(self, player_index):
+        current_player = self.all_players[player_index]
+        possible_move_locations = self.Board.get_spaces_around(current_player)
 
+        return possible_move_locations
 
     def spot_in_list(self, picked, options):
         print("Picked " + str(picked.getX()) +", "+ str(picked.getY()))
