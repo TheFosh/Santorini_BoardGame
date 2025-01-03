@@ -1,12 +1,12 @@
 ## Object representing the board of spaces in a game ##
 #######################################################
 ## Author: Jake Swanson
-from logging.config import valid_ident
-from math import floor
+
 from GameObjects.Space import Space
 
 class Board:
-    def __init__(self, screen_w, screen_h, cell_count):
+
+    def __init__(self, cell_count):
         self.WIDTH = cell_count
         self.HEIGHT = cell_count
 
@@ -51,7 +51,9 @@ class Board:
         return valid_space and correct_player
 
     def is_too_tall(self, spot, center_level):
-        return center_level >= spot.get_level() or spot.get_level() + 1 == center_level
+
+        selected_level = spot.get_level()
+        return selected_level >= center_level or selected_level + 1 == center_level
 
     def get_spaces_around(self, starting_location):
         possible_locations = []
@@ -62,7 +64,6 @@ class Board:
         RANGE_AROUND_POINT = 8
         for i in range(RANGE_AROUND_POINT):
             ## Coordinates for spot changes over time to loop around the spot.
-            ########print(str(starting_x) +", " + str(starting_y))
             if i / 2 < 1:
                 starting_x -= 1
             elif i / 2 < 2:
@@ -75,16 +76,15 @@ class Board:
 
             if valid_spot:
                 current_spot = self.grid[starting_x][starting_y]
-                good_height = self.is_too_tall(current_spot, starting_level)
-                if good_height:
-                    possible_locations.append(current_spot)
+                possible_locations.append(current_spot)
 
         return possible_locations
 
     def move_filter(self, possible_spots, starting_location):
         filtered_list = []
+        starting_level = starting_location.get_level()
         for spot in possible_spots:
-            if self.is_too_tall(spot, starting_location):
+            if self.is_too_tall(spot, starting_level):
                 filtered_list.append(spot)
 
         return filtered_list
@@ -92,3 +92,6 @@ class Board:
     def update_player_space(self, player, new_spot):
         self.grid[player.getX()][player.getY()].set_player(0)
         self.grid[new_spot.getX()][new_spot.getY()].set_player(player.get_player())
+
+    def build_on_space(self, picked_space):
+        self.grid[picked_space.getX()][picked_space.getY()].build_level()

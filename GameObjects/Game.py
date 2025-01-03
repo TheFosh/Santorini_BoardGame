@@ -7,12 +7,10 @@ from GameObjects.Player import Player
 
 
 class Game:
-    def __init__(self, _width, _height, _cell_num):
-        self.Board = Board(_width, _height, _cell_num)
+    def __init__(self, _cell_num):
+        self.Board = Board(_cell_num)
         self.player_start_order = [1,2,2,1]
         self.all_players = []
-        self.width = _width
-        self.height = _height
 
     ########################################
     ########### GETTERS & SETTERS ##########
@@ -86,13 +84,19 @@ class Game:
     def get_build_spots(self, player_index):
         current_player = self.all_players[player_index]
         possible_move_locations = self.Board.get_spaces_around(current_player)
-
         return possible_move_locations
 
     def spot_in_list(self, picked, options):
-        print("Picked " + str(picked.getX()) +", "+ str(picked.getY()))
         for i in range(len(options)):
             if picked.getX() == options[i].getX() and picked.getY() == options[i].getY():
-                print("Spot " + str(options[i].getX()) + ", " + str(options[i].getY()))
                 return True
         return False
+
+    def build_at_spot(self, picked_location):
+        """
+        Records and updates the board object with building a block level on given spot.
+        :param picked_location: Space object that is assumed to be a vaild build location
+        :return: Nothing
+        """
+        self.Board.build_on_space(picked_location)
+

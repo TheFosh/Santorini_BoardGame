@@ -10,7 +10,7 @@ from GameObjects.Space import Space
 
 class GUI:
     def __init__(self, _height, _width, _off, _cell_num):
-        self.Game = Game(_width, _height, _cell_num)
+        self.Game = Game(_cell_num)
 
         self.screen_height = _height
         self.screen_width = _width
@@ -24,6 +24,7 @@ class GUI:
         self.column_spacing = (self.board_dimensions - ((_cell_num + 1) * self.COLUMN_WIDTH)) / _cell_num
 
         self.player_displays = []
+        self.block_displays = []
 ########################################
 ########### GETTERS & SETTERS ##########
     def get_window(self):
@@ -82,6 +83,21 @@ class GUI:
                           )
 
                          for i in range(cell_per_row + 1)]
+        tempBoard = self.Game.get_board()
+
+
+        ## Makes blocks that are located on the board
+        pow(tempBoard.get_width_height(), 2)
+        for i in range(25):
+            x_point_calculation = self.BOARD_PADDING + self.COLUMN_WIDTH +(self.COLUMN_WIDTH * int(i % 5) + self.column_spacing * int(i % 5))
+            y_point_calculation = self.BOARD_PADDING + self.COLUMN_WIDTH +(self.COLUMN_WIDTH * int(i / 5) + self.column_spacing * int(i / 5))
+            top_left_point = Point(x_point_calculation, y_point_calculation)
+            bottom_left_point = Point(x_point_calculation + self.column_spacing, y_point_calculation + self.column_spacing)
+            self.block_displays.append(Rectangle(top_left_point, bottom_left_point))
+            current_box = self.block_displays[i]
+            current_box.setFill(color="Red")
+            current_box.draw(win)
+
 
         ## Drawing all bars
         for i in range(cell_per_row + 1):
@@ -153,7 +169,7 @@ class GUI:
         """
         num_count = 1
         while True:
-            print("This is turn " + str(num_count))
+            self.instruction_message = "This is turn " + str(num_count)
             for i in range(floor(len(self.Game.get_order()) / 2)):
                 current_board = self.Game.get_board()
                 picked_player = -1

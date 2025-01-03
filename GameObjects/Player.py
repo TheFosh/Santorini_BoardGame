@@ -11,8 +11,6 @@ class Player(Space):
         super().__init__(_x, _y)
         self.playerNum = _l
 
-    ## Makes the display of a player as a circle
-
     def set_space(self, given_spot):
         self.x = given_spot.getX()
         self.y = given_spot.getY()
@@ -28,4 +26,3 @@ class Player(Space):
             player_display.setFill(color="gray")
 
         return player_display
-
