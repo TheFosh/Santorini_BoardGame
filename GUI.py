@@ -95,7 +95,7 @@ class GUI:
             bottom_left_point = Point(x_point_calculation + self.column_spacing, y_point_calculation + self.column_spacing)
             self.block_displays.append(Rectangle(top_left_point, bottom_left_point))
             current_box = self.block_displays[i]
-            current_box.setFill(color="Red")
+            current_box.setFill(color="Green")
             current_box.draw(win)
 
 
@@ -156,6 +156,28 @@ class GUI:
 
         return Space(chosen_x, chosen_y)
 
+    def update_player_display(self, player_index, picked_location):
+        player_display = self.player_displays[player_index].getCenter()
+        old_display_x = player_display.getX()
+        old_display_y = player_display.getY()
+        new_display_x = self.get_selected_display(picked_location).getX()
+        new_display_y = self.get_selected_display(picked_location).getY()
+        self.Game.move_player(player_index, picked_location)
+        self.player_displays[player_index].move(new_display_x - old_display_x, new_display_y - old_display_y)
+
+    def update_block_display(self, picked_location):
+        current_board = self.Game.get_board()
+        selected_space = current_board.grid[picked_location.getX()][picked_location.getY()]
+        block_index = picked_location.getY() * 5 + picked_location.getX()
+        spot_level = selected_space.get_level()
+        if spot_level == 0:
+            self.block_displays[block_index].undraw()
+        elif 0 < spot_level < 4:
+            block_color = int(255/(4 - spot_level))
+            self.block_displays[block_index].setFill(color_rgb(block_color, block_color, block_color))
+        else:
+            self.block_displays[block_index].setFill(color="blue")
+
     def start_game(self):
         """
         Runs the game.
@@ -186,13 +208,7 @@ class GUI:
                 while True:
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, move_options):
-                        current_player_display = self.player_displays[picked_player].getCenter()
-                        old_display_x = current_player_display.getX()
-                        old_display_y = current_player_display.getY()
-                        new_display_x = self.get_selected_display(picked_location).getX()
-                        new_display_y = self.get_selected_display(picked_location).getY()
-                        self.Game.move_player(picked_player, picked_location)
-                        self.player_displays[picked_player].move(new_display_x - old_display_x, new_display_y - old_display_y)
+                        self.update_player_display(picked_player, picked_location)
                         break
 
                 build_options = self.Game.get_build_spots(picked_player)
@@ -200,6 +216,7 @@ class GUI:
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, build_options):
                         self.Game.build_at_spot(picked_location)
+                        self.update_block_display(picked_location)
                         break
 
             num_count += 1
