@@ -154,7 +154,9 @@ class GUI:
         chosen_x = floor((selected_point.getX() - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
         chosen_y = floor((selected_point.getY() - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
 
-        return Space(chosen_x, chosen_y)
+        current_board = self.Game.get_board()
+
+        return current_board.grid[chosen_x][chosen_y]
 
     def update_player_display(self, player_index, picked_location):
         player_display = self.player_displays[player_index].getCenter()

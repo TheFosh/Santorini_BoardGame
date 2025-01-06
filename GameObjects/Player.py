@@ -26,3 +26,6 @@ class Player(Space):
             player_display.setFill(color="gray")
 
         return player_display
+
+    def set_level(self, _level):
+        self.level = _level

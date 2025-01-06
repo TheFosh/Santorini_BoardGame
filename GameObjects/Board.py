@@ -51,15 +51,13 @@ class Board:
         return valid_space and correct_player
 
     def is_too_tall(self, spot, center_level):
-
         selected_level = spot.get_level()
-        return selected_level >= center_level or selected_level + 1 == center_level
+        return selected_level <= center_level or center_level + 1 == selected_level
 
     def get_spaces_around(self, starting_location):
         possible_locations = []
         starting_x = starting_location.getX() + 1
         starting_y = starting_location.getY() + 1
-        starting_level = starting_location.get_level()
 
         RANGE_AROUND_POINT = 8
         for i in range(RANGE_AROUND_POINT):
@@ -86,7 +84,6 @@ class Board:
         for spot in possible_spots:
             if self.is_too_tall(spot, starting_level):
                 filtered_list.append(spot)
-
         return filtered_list
 
     def update_player_space(self, player, new_spot):

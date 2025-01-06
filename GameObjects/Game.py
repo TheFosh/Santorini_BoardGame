@@ -68,18 +68,22 @@ class Game:
         current_player = self.all_players[player_index]
         possible_move_locations = self.Board.get_spaces_around(current_player)
         possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
+        ######print(possible_move_locations)
         return possible_move_locations
 
     def move_player(self, picked_player, picked_location):
         """
         Moves the selected player to a chosen space and changes the player and board objects.
         :param picked_player: integer representing a player in all_players
-        :param picked_location: Space where the picked player is chosen to move to. Assumed to be possible
+        :param picked_location: Space where the picked player is chosen to move to. Assumed to be possible.
         :return: Nothing
         """
         current_player = self.all_players[picked_player]
         self.Board.update_player_space(current_player, picked_location)
+        print(self.all_players[picked_player])
         self.all_players[picked_player].set_cords(picked_location.getX(), picked_location.getY())
+        self.all_players[picked_player].set_level(picked_location.get_level())
+        print(self.all_players[picked_player])
 
     def get_build_spots(self, player_index):
         current_player = self.all_players[player_index]
