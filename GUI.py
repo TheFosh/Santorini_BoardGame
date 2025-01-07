@@ -16,7 +16,9 @@ class GUI:
         self.screen_width = _width
         self.screen_offset = _off
         self.window = GraphWin("Santorini", _width, _height + _off)
-        self.instruction_message = ""
+
+        text_point = Point(self.screen_width / 2, self.screen_height)
+        self.instruction_display = Text(text_point, "")
 
         self.COLUMN_WIDTH = 10
         self.BOARD_PADDING = 30
@@ -44,6 +46,9 @@ class GUI:
         display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing)
         display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing)
         return Space(display_x_cord, display_y_cord)
+
+    ## def set_display_text(self, message):
+
 ########################################
 
     def setup(self):
@@ -121,15 +126,13 @@ class GUI:
         according to the order of determined by the game object.
         """
         win = self.get_window()
-
-        text_point = Point(self.screen_width / 2, self.screen_height)
-        instruction_display = Text(text_point, self.instruction_message)
-        instruction_display.draw(win)
+        self.instruction_display.draw(win)
 
         pieces = self.Game.get_order()
         for i in range(len(pieces)):
-            self.instruction_message = "Player " + str(pieces[i]) + ", select position for piece: "
-            instruction_display.setText(self.instruction_message)
+            message = "Player " + str(pieces[i]) + ", select position for piece: "
+
+            self.instruction_display.setText(message)
             ## Loops until all characters are validly placed
             while True:
                 chosen_cell = self.ask_for_grid_point(win)
@@ -193,11 +196,13 @@ class GUI:
         """
         num_count = 1
         while True:
-            self.instruction_message = "This is turn " + str(num_count)
+            message = ""
+            picked_player = -1
             for i in range(floor(len(self.Game.get_order()) / 2)):
                 current_board = self.Game.get_board()
-                picked_player = -1
                 while True:
+                    message = "Player " + str(i + 1) + ", pick a piece."
+                    self.instruction_display.setText(message)
                     chosen_point = self.ask_for_grid_point(self.get_window())
 
                     if current_board.valid_player_select(chosen_point, i + 1):
@@ -208,6 +213,8 @@ class GUI:
 
                 move_options = self.Game.get_move_spots(picked_player)
                 while True:
+                    message = "Move selected piece."
+                    self.instruction_display.setText(message)
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, move_options):
                         self.update_player_display(picked_player, picked_location)
@@ -215,10 +222,19 @@ class GUI:
 
                 build_options = self.Game.get_build_spots(picked_player)
                 while True:
+                    message = "Build around selected piece."
+                    self.instruction_display.setText(message)
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, build_options):
                         self.Game.build_at_spot(picked_location)
                         self.update_block_display(picked_location)
                         break
 
+            current_player = self.Game.get_player_at_index(picked_player)
+
+            if current_player.get_level() == 3:
+                break
+
             num_count += 1
+
+        print("game over")

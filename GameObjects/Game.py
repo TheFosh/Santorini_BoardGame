@@ -80,10 +80,8 @@ class Game:
         """
         current_player = self.all_players[picked_player]
         self.Board.update_player_space(current_player, picked_location)
-        print(self.all_players[picked_player])
         self.all_players[picked_player].set_cords(picked_location.getX(), picked_location.getY())
         self.all_players[picked_player].set_level(picked_location.get_level())
-        print(self.all_players[picked_player])
 
     def get_build_spots(self, player_index):
         current_player = self.all_players[player_index]
