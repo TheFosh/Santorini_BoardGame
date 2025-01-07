@@ -17,14 +17,13 @@ class GUI:
         self.screen_offset = _off
         self.window = GraphWin("Santorini", _width, _height + _off)
 
-        text_point = Point(self.screen_width / 2, self.screen_height)
-        self.instruction_display = Text(text_point, "")
-
         self.COLUMN_WIDTH = 10
         self.BOARD_PADDING = 30
         self.board_dimensions = _width - 2 * self.BOARD_PADDING
         self.column_spacing = (self.board_dimensions - ((_cell_num + 1) * self.COLUMN_WIDTH)) / _cell_num
 
+        text_point = Point(self.screen_width / 2, self.screen_height + self.BOARD_PADDING / 2)
+        self.instruction_display = Text(text_point, "")
         self.player_displays = []
         self.block_displays = []
 ########################################
@@ -46,8 +45,6 @@ class GUI:
         display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing)
         display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing)
         return Space(display_x_cord, display_y_cord)
-
-    ## def set_display_text(self, message):
 
 ########################################
 
@@ -114,6 +111,21 @@ class GUI:
 
             v_current_rec.draw(win)
             h_current_rec.draw(win)
+
+        ## Drawing on the text labels for the cells
+        ### Vertically positioned numbers
+        for i in range(cell_per_row):
+            vertical_pos =  self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/2 + (self.COLUMN_WIDTH + self.column_spacing) * i
+            text_point = Point(self.BOARD_PADDING / 2, vertical_pos)
+            label_iteration = Text(text_point, str(4 - i +1))
+            label_iteration.draw(win)
+
+        ### Horizontally positioned letters
+        for i in range(cell_per_row):
+            horizontal_pos =  self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/2 + (self.COLUMN_WIDTH + self.column_spacing) * i
+            text_point = Point(horizontal_pos, self.screen_height - self.BOARD_PADDING/2)
+            label_iteration = Text(text_point, chr(ord('a') +i))
+            label_iteration.draw(win)
 
         ## Setting and returning the new window to the current one
         self.window = win

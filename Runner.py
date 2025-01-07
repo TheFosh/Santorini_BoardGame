@@ -2,6 +2,7 @@
 ##### MAIN FILE FOR RUNNING SYSTEM #####
 ########################################
 ### Author: Jake Swanson
+from graphics import GraphWin
 
 from GUI import GUI
 
