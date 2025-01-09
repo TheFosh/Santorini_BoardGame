@@ -15,7 +15,7 @@ class GUI:
         self.screen_height = _height
         self.screen_width = _width
         self.screen_offset = _off
-        self.window = GraphWin("Santorini", _width, _height + _off)
+        self.window = GraphWin("Santorini", _width + _off, _height + _off)
 
         self.COLUMN_WIDTH = 10
         self.BOARD_PADDING = 30
@@ -163,15 +163,21 @@ class GUI:
 
     def ask_for_grid_point(self, win):
         mouse = win.getMouse()
-        return self.convert_display_to_grid(mouse)
+        return self.convert_display_on_grid(mouse.getX(), mouse.getY())
 
-    def convert_display_to_grid(self, selected_point):
-        chosen_x = floor((selected_point.getX() - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
-        chosen_y = floor((selected_point.getY() - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
+    def convert_display_on_grid(self, _disX, _disY):
+        chosen_x = floor((_disX - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
+        chosen_y = floor((_disY - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
 
         current_board = self.Game.get_board()
 
         return current_board.grid[chosen_x][chosen_y]
+
+    def convert_display_to_grid(self, _disX, _disY):
+        chosen_x = floor((_disX - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
+        chosen_y = floor((_disY - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
+
+        return Space(chosen_x, chosen_y)
 
     def update_player_display(self, player_index, picked_location):
         player_display = self.player_displays[player_index].getCenter()
@@ -179,7 +185,6 @@ class GUI:
         old_display_y = player_display.getY()
         new_display_x = self.get_selected_display(picked_location).getX()
         new_display_y = self.get_selected_display(picked_location).getY()
-        self.Game.move_player(player_index, picked_location)
         self.player_displays[player_index].move(new_display_x - old_display_x, new_display_y - old_display_y)
 
     def update_block_display(self, picked_location):
@@ -250,3 +255,45 @@ class GUI:
             num_count += 1
 
         print("game over")
+
+    def next_turn(self, _dis_x, _dis_y):
+        """
+        The next step in the game will happen given the inputted spot.
+        Depends on the boolean fields for determining the turn order.
+        :param _dis_x, _dis_y: Display coordinates that is the user selection.
+        :return: Boolean. False for game over. True for continue.
+        """
+        spot = self.convert_display_to_grid(_dis_x, _dis_y)
+
+        PICKED_PLAYER = self.Game.get_picked_player()
+        MOVE = self.Game.get_move()
+        BUILD = self.Game.get_build()
+
+        current_board = self.Game.get_board()
+        valid_select = current_board.space_on_board(spot.getX(), spot.getY())
+
+        if not valid_select:
+            return True
+
+        spot = self.convert_display_on_grid(_dis_x, _dis_y)
+
+        if not MOVE and not BUILD:
+            ### Player piece select
+            self.Game.pick_piece_turn(spot)
+
+        elif MOVE:
+            ### Movement select
+            if self.Game.move_piece_turn(spot):
+                self.Game.move_player(PICKED_PLAYER, spot)
+                self.update_player_display(PICKED_PLAYER, spot)
+
+        elif not self.Game.game_state:
+           return False
+
+        elif BUILD:
+            ### Build select
+            if self.Game.build_piece_turn(spot):
+                self.Game.build_at_spot(spot)
+                self.update_block_display(spot)
+
+        return True

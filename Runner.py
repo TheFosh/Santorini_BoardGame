@@ -16,12 +16,19 @@ GAME_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET, BOARD_CELL_COUNT)
 def main():
     GAME_GUI.setup()
     GAME_GUI.setup_game()
-    GAME_GUI.start_game()
+    ##GAME_GUI.start_game()
 
     win = GAME_GUI.get_window()
-
-    while True:
+    game_state = True
+    while game_state:
         mouse = win.checkMouse()
         if mouse != None:
             mouse.draw(win)
+            ### GAME_NEXT_TURN_METHOD(mouse) ###
+            game_state = GAME_GUI.next_turn(mouse.getX(), mouse.getY())
+
+        ### AI_STEP_METHOD(Game.Board)
+
+    while True:
+        continue
 main()

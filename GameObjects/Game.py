@@ -12,6 +12,13 @@ class Game:
         self.player_start_order = [1,2,2,1]
         self.all_players = []
 
+        self.PLAYER_TURN = 1
+        self.PICKED_PLAYER = -1
+        self.MOVE = False
+        self.BUILD = False
+
+        self.game_state = True
+
     ########################################
     ########### GETTERS & SETTERS ##########
     def get_order(self):
@@ -34,6 +41,18 @@ class Game:
 
     def get_player_at_index(self, player_index):
         return self.all_players[player_index]
+
+    def get_move(self):
+        return self.MOVE
+
+    def get_build(self):
+        return self.BUILD
+
+    def get_player_turn(self):
+        return self.PLAYER_TURN
+
+    def get_picked_player(self):
+        return self.PICKED_PLAYER
     ########################################
 
     def pick_player_spot(self, chosen_cell, player_num):
@@ -68,7 +87,6 @@ class Game:
         current_player = self.all_players[player_index]
         possible_move_locations = self.Board.get_spaces_around(current_player)
         possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
-        ######print(possible_move_locations)
         return possible_move_locations
 
     def move_player(self, picked_player, picked_location):
@@ -82,6 +100,8 @@ class Game:
         self.Board.update_player_space(current_player, picked_location)
         self.all_players[picked_player].set_cords(picked_location.getX(), picked_location.getY())
         self.all_players[picked_player].set_level(picked_location.get_level())
+        if current_player.get_level() == 3:
+            self.game_state = False
 
     def get_build_spots(self, player_index):
         current_player = self.all_players[player_index]
@@ -102,3 +122,29 @@ class Game:
         """
         self.Board.build_on_space(picked_location)
 
+    def pick_piece_turn(self, spot):
+        current_board = self.get_board()
+        if current_board.valid_player_select(spot, self.PLAYER_TURN):
+            ## Successfully chosen a player
+            chosen_player_piece = current_board.get_chosen_grid_space(spot)
+            self.PICKED_PLAYER = self.get_player_at_spot(chosen_player_piece)
+            self.MOVE = True
+            return True
+
+        return False
+
+    def move_piece_turn(self, spot):
+        move_options = self.get_move_spots(self.PICKED_PLAYER)
+        valid_spot = self.spot_in_list(spot, move_options)
+        if valid_spot:
+            self.MOVE = False
+            self.BUILD = True
+        return valid_spot
+
+    def build_piece_turn(self, spot):
+        build_options = self.get_build_spots(self.PICKED_PLAYER)
+        valid_spot = self.spot_in_list(spot, build_options)
+        if valid_spot:
+            self.BUILD = False
+            self.PLAYER_TURN = self.PLAYER_TURN % 2 + 1  ## Flip turn order
+        return valid_spot
