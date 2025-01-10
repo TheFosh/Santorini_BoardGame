@@ -9,8 +9,9 @@ from GameObjects.Space import Space
 
 
 class GUI:
-    def __init__(self, _height, _width, _off, _cell_num):
+    def __init__(self, _height, _width, _off, _cell_num, _ai):
         self.Game = Game(_cell_num)
+        self.game_ai = _ai
 
         self.screen_height = _height
         self.screen_width = _width
@@ -26,6 +27,8 @@ class GUI:
         self.instruction_display = Text(text_point, "")
         self.player_displays = []
         self.block_displays = []
+
+        self.evaluation_displays = []
 ########################################
 ########### GETTERS & SETTERS ##########
     def get_window(self):
@@ -45,6 +48,9 @@ class GUI:
         display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing)
         display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing)
         return Space(display_x_cord, display_y_cord)
+
+    def get_board(self):
+        return self.Game.get_board()
 
 ########################################
 
@@ -143,7 +149,6 @@ class GUI:
         pieces = self.Game.get_order()
         for i in range(len(pieces)):
             message = "Player " + str(pieces[i]) + ", select position for piece: "
-
             self.instruction_display.setText(message)
             ## Loops until all characters are validly placed
             while True:
@@ -173,6 +178,12 @@ class GUI:
 
         return current_board.grid[chosen_x][chosen_y]
 
+    def convert_to_display(self, grid_spot):
+        disX = grid_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing) + self.BOARD_PADDING
+        disY = grid_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing) + self.BOARD_PADDING
+
+        return Point(disX, disY)
+
     def convert_display_to_grid(self, _disX, _disY):
         chosen_x = floor((_disX - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
         chosen_y = floor((_disY - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
@@ -200,6 +211,9 @@ class GUI:
         else:
             self.block_displays[block_index].setFill(color="blue")
 
+    def set_message(self, message):
+        self.instruction_display.setText(message)
+
     def start_game(self):
         """
         Runs the game.
@@ -218,8 +232,7 @@ class GUI:
             for i in range(floor(len(self.Game.get_order()) / 2)):
                 current_board = self.Game.get_board()
                 while True:
-                    message = "Player " + str(i + 1) + ", pick a piece."
-                    self.instruction_display.setText(message)
+                    self.set_message("Player " + str(i + 1) + ", pick a piece.")
                     chosen_point = self.ask_for_grid_point(self.get_window())
 
                     if current_board.valid_player_select(chosen_point, i + 1):
@@ -230,8 +243,7 @@ class GUI:
 
                 move_options = self.Game.get_move_spots(picked_player)
                 while True:
-                    message = "Move selected piece."
-                    self.instruction_display.setText(message)
+                    self.set_message("Move selected piece.")
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, move_options):
                         self.update_player_display(picked_player, picked_location)
@@ -239,8 +251,7 @@ class GUI:
 
                 build_options = self.Game.get_build_spots(picked_player)
                 while True:
-                    message = "Build around selected piece."
-                    self.instruction_display.setText(message)
+                    self.set_message("Build around selected piece.")
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, build_options):
                         self.Game.build_at_spot(picked_location)
@@ -266,6 +277,7 @@ class GUI:
         spot = self.convert_display_to_grid(_dis_x, _dis_y)
 
         PICKED_PLAYER = self.Game.get_picked_player()
+        PLAYER_TURN = self.Game.get_player_turn()
         MOVE = self.Game.get_move()
         BUILD = self.Game.get_build()
 
@@ -279,21 +291,26 @@ class GUI:
 
         if not MOVE and not BUILD:
             ### Player piece select
-            self.Game.pick_piece_turn(spot)
+            if self.Game.pick_piece_turn(spot):
+                self.set_message("Move selected piece.")
 
         elif MOVE:
             ### Movement select
             if self.Game.move_piece_turn(spot):
                 self.Game.move_player(PICKED_PLAYER, spot)
                 self.update_player_display(PICKED_PLAYER, spot)
+                self.set_message("Build around selected piece.")
+
 
         elif not self.Game.game_state:
-           return False
+            self.set_message("Game over")
+            return False
 
         elif BUILD:
             ### Build select
             if self.Game.build_piece_turn(spot):
                 self.Game.build_at_spot(spot)
                 self.update_block_display(spot)
+                self.set_message("Player " + str(3 -PLAYER_TURN) + ", pick a piece.")
 
         return True
