@@ -8,11 +8,10 @@ from GameObjects.Board import Board
 
 
 class GameEvaluator:
-    def __init__(self, _d, _board: Board, _p_num):
+    def __init__(self, _d, _board: Board):
         self.Depth = _d              ## The depth to look into the future for
         self.insight_count = 0  ## The count of how many possible moves the AI has looked at
         self.current_board = _board  ## The board to analyse
-        self.player_pieces = self.get_player_pieces(_p_num)
 
     def get_player_pieces(self, player_num):
         pieces = []
@@ -23,12 +22,14 @@ class GameEvaluator:
 
         return pieces
 
+    def search_once(self, picked_player):
+
+
     def turn_generator(self, player_num):
         """
         Since a turn consists of three points that are needed
-        :param player_num:
-        :return:
         """
+
 
     def total_score(self, player_piece, potential_spot):
         return (self.winning_score(player_piece, potential_spot)

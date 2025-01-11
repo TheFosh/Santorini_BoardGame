@@ -2,6 +2,8 @@
 ########################################################
 ## Author: Jake Swanson
 from math import floor
+
+from ArtificialPlayer import GameEvaluator
 from GameObjects.Game import Game
 from graphics import *
 
@@ -11,7 +13,7 @@ from GameObjects.Space import Space
 class GUI:
     def __init__(self, _height, _width, _off, _cell_num, _ai):
         self.Game = Game(_cell_num)
-        self.game_ai = _ai
+        self.game_ai = GameEvaluator(2, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width
