@@ -11,9 +11,9 @@ from GameObjects.Space import Space
 
 
 class GUI:
-    def __init__(self, _height, _width, _off, _cell_num, _ai):
+    def __init__(self, _height, _width, _off, _cell_num):
         self.Game = Game(_cell_num)
-        self.game_ai = GameEvaluator(2, self.Game.get_board())
+        self.game_ai = GameEvaluator(1, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width

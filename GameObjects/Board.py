@@ -25,6 +25,9 @@ class Board:
         return self.grid[chosen_space.getX()][chosen_space.getY()]
 
     def set_grid_player(self, chosen_space, player_num):
+        """
+        Sets given space to be the given player num.
+        """
         self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
     ########################################
 

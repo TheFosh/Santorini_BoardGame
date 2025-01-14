@@ -3,22 +3,26 @@
 ## Author: Jake Swanson
 import math
 from os.path import curdir
+from xxsubtype import bench
 
 from GameObjects.Board import Board
+from GameObjects.Turn import Turn
 
 
 class GameEvaluator:
+
     def __init__(self, _d, _board: Board):
         self.Depth = _d              ## The depth to look into the future for
         self.insight_count = 0  ## The count of how many possible moves the AI has looked at
         self.current_board = _board  ## The board to analyse
+        self.future_board = _board
 
     def get_player_pieces(self, player_num):
         pieces = []
-        for i in range(self.current_board.WIDTH):
-            for j in range(self.current_board.HEIGHT):
-                if self.current_board.grid[i][j].get_player() == player_num:
-                    pieces.append(self.current_board.grid[i][j])
+        for i in range(self.future_board.WIDTH):
+            for j in range(self.future_board.HEIGHT):
+                if self.future_board.grid[i][j].get_player() == player_num:
+                    pieces.append(self.future_board.grid[i][j])
 
         return pieces
 
@@ -26,82 +30,88 @@ class GameEvaluator:
         """
         :return: All possible turns for the pieces of the relevant player
         """
-        piece_turns = []
         pieces = self.get_player_pieces(relevant_player_num)
-
-        for p in pieces:
-            piece_turns.append(self.turn_generator(p))
-
-        return piece_turns
-
-    def turn_generator(self, player_piece):
-        """
-        Makes an array of moves and builds around the given player piece.
-        """
         all_turns = []
 
-        all_moves = self.current_board.get_spaces_around(player_piece)
-        possible_moves = self.current_board.move_filter(all_moves, player_piece)
-        for m in possible_moves:
-            possible_builds = self.current_board.get_spaces_around(m)
-            all_turns.append(m)
-            for b in possible_builds:
-                all_turns.append(b)
+        for p in pieces:
+            all_moves = self.future_board.get_spaces_around(p)
+            possible_moves = self.future_board.move_filter(all_moves, p)
+            for m in possible_moves:
+                possible_builds = self.future_board.get_spaces_around(m)
+                for b in possible_builds:
+                    all_turns.append(Turn(p, m, b))
 
-    def total_score(self, player_piece, potential_spot):
-        return (self.winning_score(player_piece, potential_spot)
-                + self.height_weights(player_piece, potential_spot)
-                + self.player_distance_weights(player_piece, potential_spot))
+        return all_turns
 
-    def winning_score(self, player_piece, potential_spot):
-        if player_piece.get_level() == 2 and potential_spot.get_level() == 3:
-            return 10000
-
+    def total_board_score(self):
         return 0
 
-    def height_weights(self, player_piece, potential_spot):
+    def simulate_turn(self, turn):
         """
-        Influences turns to favor being at a higher level vs. falling down.
+        Given points on a board, a new board is created.
+        These points are assumed to be valid and used to simulate a
+        valid turn for a player.
         """
-        level_difference = potential_spot.get_level() - player_piece.get_level()
-        if  level_difference == 1:
-            return level_difference * 10
+        temp_board = self.future_board
 
-        return 20 * level_difference
+        temp_board.set_grid_player(turn.get_piece(), 0)
+        temp_board.set_grid_player(turn.get_move(), turn.get_piece().get_player())
+        temp_board.build_on_space(turn.get_build())
 
-    def player_distance_weights(self, player_piece, potential_spot):
-        """
-        Influences player pieces to be keep a certain distance to their opponent's pieces.
-        """
-        opponent_label = 3 - player_piece.get_player()
-        opponent_pieces = self.get_player_pieces(opponent_label)
+        return temp_board
 
-        spaces_away = []
-        for o_piece in opponent_pieces:
-            x_difference = player_piece.getX() - o_piece.getX()
-            y_difference = player_piece.getY() - o_piece.getY()
-            e_distance = math.sqrt(math.pow(x_difference, 2) + math.pow(y_difference, 2))
+    def undo_turn(self, turn):
+        temp_board = self.future_board
 
-            spaces_away.append(math.floor(math.fabs(e_distance - 1)))
+        temp_board.set_grid_player(turn.get_piece(), turn.get_piece().get_player())
+        temp_board.set_grid_player(turn.get_move(), 0)
+        turn.get_build().remove_level()
+        temp_board.build_on_space(turn.get_build())
 
-        weights = []
-        for space_num in spaces_away:
-            ## Want to prefer a distance of 1
-            score = 2 - math.pow(space_num - 1, 2)
+        return temp_board
 
-            ## Arbitrary weight
-            distance_weight = 30
-            weights.append(score * distance_weight)
+    def check_new_board(self, given_board):
+        if given_board != self.current_board:
+            self.current_board = given_board
+            self.future_board = given_board
+            self.insight_count = 0
 
-        return weights[0] + weights[1]
+        return given_board != self.current_board
 
-    def evaluate_next_step(self, relevant_player):
+    def find_best_turn(self, all_turns):
+        turn = []
+        best_turn = all_turns[0]
+
+        for i in range(int(len(turn)/3)):
+            current_turn = all_turns[i]
+            if self.total_score(best_turn) < self.total_score(current_turn):
+                best_turn = current_turn
+
+        return best_turn
+
+    def evaluate_board_step(self, given_board):
         """
         Every call looks 1 step further into possible moves
         from where it left off.
         """
+        self.check_new_board(given_board)
+        player_one_score = self.evaluate_board(self.Depth, 1)
 
-        for i in self.Depth:
-            all_turns = self.search_moves(relevant_player)
+        return player_one_score
 
+    def evaluate_board(self, d, p):
+        if d == 0:
+            return self.total_board_score()
 
+        all_turns = self.search_moves(p)
+
+        best_score = -math.inf
+
+        for t in all_turns:
+
+            self.future_board = self.simulate_turn(t)
+            score = -self.evaluate_board(d-1, 3-p)
+            best_score = max(best_score, score)
+            self.future_board = self.undo_turn(t)
+
+        return best_score
