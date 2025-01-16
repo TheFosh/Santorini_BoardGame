@@ -31,6 +31,13 @@ class Board:
         self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
     ########################################
 
+    def same_board(self, check_board):
+        for i in range(self.WIDTH):
+            for j in range(self.HEIGHT):
+                if not self.grid[i][j].same_spot(check_board.grid[i][j]):
+                    return False
+        return True
+
     def valid_for_open_space(self, _x, _y):
         return (self.space_on_board(_x, _y) and
                 self.grid[_x][_y].playerNum == 0 and

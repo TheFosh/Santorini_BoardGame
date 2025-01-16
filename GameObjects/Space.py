@@ -46,3 +46,7 @@ class Space:
     def set_cords(self, _x, _y):
         self.x = _x
         self.y = _y
+
+    def same_spot(self, check_spot):
+        return (self.level == check_spot.get_level() and
+                self.playerNum == check_spot.get_player())

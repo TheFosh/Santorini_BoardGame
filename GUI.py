@@ -1,6 +1,7 @@
 ## Object for setting up the Graphical User Interface ##
 ########################################################
 ## Author: Jake Swanson
+import copy
 from math import floor
 
 from ArtificialPlayer import GameEvaluator
@@ -13,7 +14,7 @@ from GameObjects.Space import Space
 class GUI:
     def __init__(self, _height, _width, _off, _cell_num):
         self.Game = Game(_cell_num)
-        self.game_ai = GameEvaluator(1, self.Game.get_board())
+        self.game_ai = GameEvaluator(2, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width
@@ -302,6 +303,7 @@ class GUI:
                 self.Game.move_player(PICKED_PLAYER, spot)
                 self.update_player_display(PICKED_PLAYER, spot)
                 self.set_message("Build around selected piece.")
+            #self.window.update()
 
 
         elif not self.Game.game_state:
@@ -316,3 +318,8 @@ class GUI:
                 self.set_message("Player " + str(3 -PLAYER_TURN) + ", pick a piece.")
 
         return True
+
+    def update_ai(self):
+        board_copy = copy.deepcopy(self.Game.get_board())
+
+        print(self.game_ai.evaluate_board_step(board_copy))

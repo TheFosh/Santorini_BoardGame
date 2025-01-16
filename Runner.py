@@ -2,10 +2,14 @@
 ##### MAIN FILE FOR RUNNING SYSTEM #####
 ########################################
 ### Author: Jake Swanson
+import copy
+import time
+
 from graphics import GraphWin
 
 from ArtificialPlayer import GameEvaluator
 from GUI import GUI
+from GameObjects.Space import Space
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
@@ -24,5 +28,9 @@ def main():
         mouse = win.checkMouse()
         if mouse != None:
             GAME_GUI.next_turn(mouse.getX(), mouse.getY())
+            win.update()
             mouse.draw(win)
+
+
+        GAME_GUI.update_ai()
 main()
