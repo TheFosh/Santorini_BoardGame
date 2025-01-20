@@ -5,6 +5,11 @@ class Turn:
         self.build = _build
         self.evaluation = 0
 
+    def __repr__(self):
+        return ("First pick piece at: " + str(self.piece) +
+                "Next, move that piece to: " + str(self.move) +
+                "Next, build that piece at: "+ str(self.build) )
+
     def get_piece(self):
         return self.piece
 

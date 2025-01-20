@@ -25,9 +25,7 @@ class Board:
         return self.grid[chosen_space.getX()][chosen_space.getY()]
 
     def set_grid_player(self, chosen_space, player_num):
-        """
-        Sets given space to be the given player num.
-        """
+        """Sets given space to be the given player num."""
         self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
     ########################################
 
@@ -102,3 +100,6 @@ class Board:
 
     def build_on_space(self, picked_space):
         self.grid[picked_space.getX()][picked_space.getY()].build_level()
+
+    def undo_build_on_space(self, picked_space):
+        self.grid[picked_space.getX()][picked_space.getY()].remove_level()

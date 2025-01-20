@@ -31,6 +31,8 @@ def main():
             win.update()
             mouse.draw(win)
 
-
         GAME_GUI.update_ai()
+
+    while True:
+        continue
 main()

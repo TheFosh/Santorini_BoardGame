@@ -22,7 +22,6 @@ class GameEvaluator:
             for j in range(self.future_board.HEIGHT):
                 if self.future_board.grid[i][j].get_player() == player_num:
                     pieces.append(self.future_board.grid[i][j])
-
         return pieces
 
     def search_moves(self, relevant_player_num):
@@ -74,11 +73,9 @@ class GameEvaluator:
     def winning_score(self, pieces):
         for p in pieces:
             if p.get_level() == 3:
-                return math.inf
+                return 100000
 
         return 0
-
-
 
     def simulate_turn(self, turn):
         """
@@ -86,23 +83,16 @@ class GameEvaluator:
         These points are assumed to be valid and used to simulate a
         valid turn for a player.
         """
-        temp_board = self.future_board
-
-        temp_board.set_grid_player(turn.get_piece(), 0)
-        temp_board.set_grid_player(turn.get_move(), turn.get_piece().get_player())
-        temp_board.build_on_space(turn.get_build())
-
-        return temp_board
+        p_num = turn.get_piece().get_player()
+        self.future_board.set_grid_player(turn.get_piece(), 0)
+        self.future_board.set_grid_player(turn.get_move(), p_num)
+        self.future_board.build_on_space(turn.get_build())
 
     def undo_turn(self, turn):
-        temp_board = self.future_board
-
-        temp_board.set_grid_player(turn.get_piece(), turn.get_piece().get_player())
-        temp_board.set_grid_player(turn.get_move(), 0)
-        turn.get_build().remove_level()
-        temp_board.build_on_space(turn.get_build())
-
-        return temp_board
+        p_num = turn.get_move().get_player()
+        self.future_board.set_grid_player(turn.get_piece(), p_num)
+        self.future_board.set_grid_player(turn.get_move(), 0)
+        self.future_board.undo_build_on_space(turn.get_build())
 
     def check_new_board(self, given_board):
         if not self.current_board.same_board(given_board):
@@ -127,13 +117,13 @@ class GameEvaluator:
 
         all_turns = self.search_moves(p)
 
-        best_score = -math.inf
+        best_score = -10000
 
         for t in all_turns:
-
-            self.future_board = self.simulate_turn(t)
-            score = -self.evaluate_board(d-1, 3-p)
+            self.simulate_turn(t)
+            score = -self.evaluate_board(d -1, 3 -p)
             best_score = max(best_score, score)
-            self.future_board = self.undo_turn(t)
+            self.undo_turn(t)
+
 
         return best_score
