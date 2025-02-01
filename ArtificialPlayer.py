@@ -12,8 +12,11 @@ class GameEvaluator:
 
     def __init__(self, _d, _board: Board):
         self.Depth = _d              ## The depth to look into the future for
+        self.alpha = -1000000
+        self.beta = 100000
         self.insight_count = 0  ## The count of how many possible moves the AI has looked at
         self.current_board = copy.deepcopy(_board)  ## The board to analyse
+        self.predicting_board = copy.deepcopy(_board)
         self.future_board = copy.deepcopy(_board)
 
     def get_player_pieces(self, player_num):
@@ -50,9 +53,11 @@ class GameEvaluator:
         p1_pieces = self.get_player_pieces(1)
         p2_pieces = self.get_player_pieces(2)
         player_one_score = (self.winning_score(p1_pieces) +
-                            self.near_blocks_score(p1_pieces))
+                            self.near_blocks_score(p1_pieces) +
+                            self.climbing_score(p1_pieces))
         player_two_score = (self.winning_score(p2_pieces) +
-                            self.near_blocks_score(p2_pieces))
+                            self.near_blocks_score(p2_pieces) +
+                            self.climbing_score(p2_pieces))
 
         return player_one_score - player_two_score
 
@@ -61,14 +66,21 @@ class GameEvaluator:
 
         for p in pieces:
             all_moves = self.future_board.get_spaces_around(p)
-            climbable_moves = []
+            climbable_moves = 0
             for m in all_moves:
                 if m.get_level() + 1 == p.get_level():
-                    climbable_moves.append(m)
+                    climbable_moves += 1
 
-            score += 10 * len(climbable_moves)
+            score += 10 * climbable_moves ** 2
 
         return score
+
+    def climbing_score(self, pieces):
+        total_score = 0
+        for p in pieces:
+            total_score += p.get_level() * 50
+
+        return total_score
 
     def winning_score(self, pieces):
         for p in pieces:
@@ -98,6 +110,7 @@ class GameEvaluator:
         if not self.current_board.same_board(given_board):
             self.current_board = copy.deepcopy(given_board)
             self.future_board = copy.deepcopy(given_board)
+            self.predicting_board = copy.deepcopy(given_board)
             self.insight_count = 0
 
         return given_board != self.current_board
@@ -108,22 +121,31 @@ class GameEvaluator:
         from where it left off.
         """
         self.check_new_board(given_board)
-        player_one_score = self.evaluate_board(self.Depth, 1)
+        player_one_score = self.evaluate_board(self.Depth, 1, self.alpha, self.beta)
+        self.future_board = copy.deepcopy(self.predicting_board)
         return player_one_score
 
-    def evaluate_board(self, d, p):
+    def evaluate_board(self, d, p, alpha, beta):
         if d == 0:
+            #if  self.total_board_score() != 0:
+            #print(self.total_board_score())
             return self.total_board_score()
 
         all_turns = self.search_moves(p)
-
-        best_score = -10000
+        if len(all_turns) == 0:
+            return 0
 
         for t in all_turns:
+
             self.simulate_turn(t)
-            score = -self.evaluate_board(d -1, 3 -p)
-            best_score = max(best_score, score)
+            score = -self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
             self.undo_turn(t)
 
+            if score >= beta:
+                return beta
 
-        return best_score
+            if score > alpha:
+                alpha = score
+                self.predicting_board = copy.deepcopy(self.future_board)
+
+        return alpha
