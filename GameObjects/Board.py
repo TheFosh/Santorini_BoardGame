@@ -15,6 +15,13 @@ class Board:
                         for j in range(self.HEIGHT)
                     ]
 
+        #### BOARD MEANING ####
+        ## Every 5 bits are a single cell
+        ## The first 2 of the 5 bits are representing the player number.
+        ## The last 3 are for the level of the space.
+        ## There should be 5 * 25 bits for every space on the board.
+        #self.hash_board = [self.decimal_to_binary(0)] * cell_count ** 2
+
     ########################################
     ########### GETTERS & SETTERS ##########
     def get_width_height(self):
