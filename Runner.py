@@ -27,7 +27,8 @@ def main():
     while True:
         mouse = win.checkMouse()
         if mouse != None:
-            GAME_GUI.next_turn(mouse.getX(), mouse.getY())
+            GAME_GUI.next_turn(mouse.getX(), mouse.getY(), ai_on=True)
+            #GAME_GUI.next_turn_hash(mouse.getX(), mouse.getY())
             win.update()
             mouse.draw(win)
 

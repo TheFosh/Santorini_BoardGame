@@ -14,6 +14,7 @@ from GameObjects.Space import Space
 class GUI:
     def __init__(self, _height, _width, _off, _cell_num):
         self.Game = Game(_cell_num)
+        
         self.game_ai = GameEvaluator(4, self.Game.get_board())
 
         self.screen_height = _height
@@ -140,7 +141,7 @@ class GUI:
         self.window = win
         return self.get_window()
 
-    def setup_game(self):
+    def setup_game(self, is_hash = False):
         """
         Will ask the player to select where on the screen, they would
         like their player piece to be. It will do this for all pieces,
@@ -270,13 +271,17 @@ class GUI:
 
         print("game over")
 
-    def next_turn(self, _dis_x, _dis_y):
+    def next_turn(self, _dis_x, _dis_y, ai_on = False):
         """
         The next step in the game will happen given the inputted spot.
         Depends on the boolean fields for determining the turn order.
         :param _dis_x, _dis_y: Display coordinates that is the user selection.
         :return: Boolean. False for game over. True for continue.
         """
+        if ai_on:
+            print("Test")
+            return
+
         spot = self.convert_display_to_grid(_dis_x, _dis_y)
 
         PICKED_PLAYER = self.Game.get_picked_player()
@@ -318,6 +323,57 @@ class GUI:
                 self.set_message("Player " + str(3 -PLAYER_TURN) + ", pick a piece.")
 
         return True
+
+#########
+    def next_turn_hash(self, _dis_x, _dis_y):
+        """
+        The next step in the game will happen given the inputted spot.
+        Depends on the boolean fields for determining the turn order.
+        :param _dis_x, _dis_y: Display coordinates that is the user selection.
+        :return: Boolean. False for game over. True for continue.
+        """
+        spot = self.convert_display_to_grid(_dis_x, _dis_y)
+
+        PICKED_PLAYER = self.Game.get_picked_player()
+        PLAYER_TURN = self.Game.get_player_turn()
+        MOVE = self.Game.get_move()
+        BUILD = self.Game.get_build()
+
+        current_board = self.Game.get_hashboard()
+        valid_select = current_board.space_on_board(spot.getX(), spot.getY())
+
+        if not valid_select:
+            return True
+
+        spot = self.convert_display_on_grid(_dis_x, _dis_y)
+
+        if not MOVE and not BUILD:
+            ### Player piece select
+            if self.Game.pick_piece_turn_hash(spot):
+                self.set_message("Move selected piece.")
+
+        elif MOVE:
+            ### Movement select
+            if self.Game.move_piece_turn(spot):
+                self.Game.move_player(PICKED_PLAYER, spot)
+                self.update_player_display(PICKED_PLAYER, spot)
+                self.set_message("Build around selected piece.")
+            #self.window.update()
+
+
+        elif not self.Game.game_state:
+            self.set_message("Game over")
+            return False
+
+        elif BUILD:
+            ### Build select
+            if self.Game.build_piece_turn(spot):
+                self.Game.build_at_spot(spot)
+                self.update_block_display(spot)
+                self.set_message("Player " + str(3 -PLAYER_TURN) + ", pick a piece.")
+
+        return True
+############
 
     def update_ai(self):
         board_copy = copy.deepcopy(self.Game.get_board())

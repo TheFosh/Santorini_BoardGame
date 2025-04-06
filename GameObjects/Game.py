@@ -3,14 +3,18 @@
 ########################################################
 ## Author: Jake Swanson
 from GameObjects.Board import Board
+from GameObjects.HashableBoard import Hashboard
 from GameObjects.Player import Player
 
 
 class Game:
-    def __init__(self, _cell_num):
+    def __init__(self, _cell_num, is_hash = False):
         self.Board = Board(_cell_num)
+        self.HashBoard = Hashboard(_cell_num)
+        self.IS_HASH = is_hash
         self.player_start_order = [1,2,2,1]
         self.all_players = []
+
 
         self.PLAYER_TURN = 1
         self.PICKED_PLAYER = -1
@@ -26,6 +30,9 @@ class Game:
 
     def get_board(self):
         return self.Board
+
+    def get_hashboard(self):
+        return self.HashBoard
 
     def get_player_at_spot(self, spot):
         """
@@ -64,12 +71,20 @@ class Game:
         to the chosen spot. Also, will add it to the list of players.
         If not, it will ONLY return false.
         """
-        if self.Board.valid_for_open_space(chosen_cell.getX(), chosen_cell.getY()):
-            self.Board.set_grid_player(chosen_cell, player_num)
-            self.add_player(chosen_cell.getX(),chosen_cell.getY(), player_num)
-            return True
+        if not self.IS_HASH:
+            if self.Board.valid_for_open_space(chosen_cell.getX(), chosen_cell.getY()):
+                self.Board.set_grid_player(chosen_cell, player_num)
+                self.add_player(chosen_cell.getX(), chosen_cell.getY(), player_num)
+                return True
+            else:
+                return False
         else:
-            return False
+            if self.HashBoard.valid_for_open_space(chosen_cell.getX(), chosen_cell.getY()):
+                self.HashBoard.set_grid_player(chosen_cell.getX(), chosen_cell.getY(), player_num)
+                self.add_player(chosen_cell.getX(), chosen_cell.getY(), player_num)
+                return True
+            else:
+                return False
 
     def set_character_spot(self, picked_space, player_iter):
         """Sets the player with its given point."""
@@ -122,11 +137,22 @@ class Game:
         """
         self.Board.build_on_space(picked_location)
 
-    def pick_piece_turn(self, spot):
+    def pick_piece_turn(self, spot, ai_on = False):
         current_board = self.get_board()
         if current_board.valid_player_select(spot, self.PLAYER_TURN):
             ## Successfully chosen a player
             chosen_player_piece = current_board.get_chosen_grid_space(spot)
+            self.PICKED_PLAYER = self.get_player_at_spot(chosen_player_piece)
+            self.MOVE = True
+            return True
+
+        return False
+
+    def pick_piece_turn_hash(self, spot):
+        current_board = self.get_hashboard()
+        if current_board.valid_player_select(spot.getX(), spot.getY(), self.PLAYER_TURN):
+            ## Successfully chosen a player
+            chosen_player_piece = current_board.get_chosen_grid_space(spot.getX(), spot.getY())
             self.PICKED_PLAYER = self.get_player_at_spot(chosen_player_piece)
             self.MOVE = True
             return True

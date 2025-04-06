@@ -132,10 +132,3 @@ class Hashboard:
     def undo_build_on_space(self, x, y):
         if self.get_space_level(x, y) > 0:
             self.hash_board[x][y] -= 1
-
-
-########### TESTING CODE #################
-board = Hashboard(5)
-tx = 4
-ty = 3
-print(board.get_spaces_around(tx,ty))
