@@ -15,7 +15,7 @@ class GUI:
     def __init__(self, _height, _width, _off, _cell_num):
         self.Game = Game(_cell_num)
         
-        self.game_ai = GameEvaluator(4, self.Game.get_board())
+        self.game_ai = GameEvaluator(6, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width
@@ -218,7 +218,7 @@ class GUI:
     def set_message(self, message):
         self.instruction_display.setText(message)
 
-    def start_game(self):
+    def start_game(self, ai_on = False):
         """
         Runs the game.
         Assumes that functions, setup and setup_game have already been called.
@@ -231,14 +231,13 @@ class GUI:
         """
         num_count = 1
         while True:
-            message = ""
+            # Current picked player number
             picked_player = -1
             for i in range(floor(len(self.Game.get_order()) / 2)):
                 current_board = self.Game.get_board()
                 while True:
                     self.set_message("Player " + str(i + 1) + ", pick a piece.")
                     chosen_point = self.ask_for_grid_point(self.get_window())
-
                     if current_board.valid_player_select(chosen_point, i + 1):
                         ## Successfully chosen a player
                         chosen_player_piece = current_board.get_chosen_grid_space(chosen_point)
@@ -250,6 +249,7 @@ class GUI:
                     self.set_message("Move selected piece.")
                     picked_location = self.ask_for_grid_point(self.get_window())
                     if self.Game.spot_in_list(picked_location, move_options):
+                        self.Game.move_player(picked_player, picked_location)
                         self.update_player_display(picked_player, picked_location)
                         break
 
@@ -268,6 +268,8 @@ class GUI:
                 break
 
             num_count += 1
+
+            print(self.game_ai.evaluate_board_full(self.Game.get_board()))
 
         print("game over")
 
