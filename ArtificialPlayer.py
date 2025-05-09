@@ -2,7 +2,7 @@
 ###################################################################
 ## Author: Jake Swanson
 import copy
-import math
+import numpy as np
 
 from GameObjects.Board import Board
 from GameObjects.Turn import Turn
@@ -12,8 +12,8 @@ class GameEvaluator:
 
     def __init__(self, _d, _board: Board):
         self.Depth = _d              ## The depth to look into the future for
-        self.alpha = -1000000
-        self.beta = 100000
+        self.alpha = -np.inf
+        self.beta = np.inf
         self.insight_count = 0  ## The count of how many possible moves the AI has looked at
         self.current_board = copy.deepcopy(_board)  ## The board to analyse
         self.predicting_board = copy.deepcopy(_board)
@@ -26,6 +26,10 @@ class GameEvaluator:
                 if self.future_board.grid[i][j].get_player() == player_num:
                     pieces.append(self.future_board.grid[i][j])
         return pieces
+
+    # Setter for setting the board the AI sees.
+    def set_board(self, given_board):
+        self.current_board = copy.deepcopy(given_board)
 
     def search_moves(self, relevant_player_num):
         """
@@ -123,6 +127,11 @@ class GameEvaluator:
         self.check_new_board(given_board)
         player_one_score = self.evaluate_board(self.Depth, 1, self.alpha, self.beta)
         self.future_board = copy.deepcopy(self.predicting_board)
+        return player_one_score
+
+    def evaluate_board_full(self, given_board):
+        self.set_board(given_board)
+        player_one_score = self.evaluate_board(self.Depth, 1, self.alpha, self.beta)
         return player_one_score
 
     def evaluate_board(self, d, p, alpha, beta):

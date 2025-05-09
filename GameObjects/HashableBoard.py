@@ -125,6 +125,14 @@ class Hashboard:
                 filtered_list.append(spot)
         return filtered_list
 
+    def update_player_space(self, p_x, p_y, p_n, new_x, new_y):
+        """
+        Given Player starting location and number data, and a new location
+        data, the board is updated on where the player is being moved to.
+        """
+        self.grid[p_x][p_y].set_player(0) # Old player location updated to 0 for no player.
+        self.grid[new_x][new_y].set_player(p_n) # New player location updated to have the player number added.
+
     def build_on_space(self, x, y):
         if self.get_space_level(x,y) < 4:
             self.hash_board[x][y] += 1

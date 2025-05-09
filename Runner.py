@@ -24,15 +24,18 @@ def main():
 
     win = GAME_GUI.get_window()
 
-    while True:
-        mouse = win.checkMouse()
-        if mouse != None:
-            GAME_GUI.next_turn(mouse.getX(), mouse.getY(), ai_on=True)
-            #GAME_GUI.next_turn_hash(mouse.getX(), mouse.getY())
-            win.update()
-            mouse.draw(win)
+    GAME_GUI.start_game()
 
-        #GAME_GUI.update_ai()
+
+
+    # while True:
+    #     mouse = win.checkMouse()
+    #     if mouse != None:
+    #         GAME_GUI.next_turn(mouse.getX(), mouse.getY(), ai_on=True)
+    #         win.update()
+    #         mouse.draw(win)
+    #
+    #     #GAME_GUI.update_ai()
 
     while True:
         continue
