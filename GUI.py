@@ -4,7 +4,7 @@
 import copy
 from math import floor
 
-from ArtificialPlayer import GameEvaluator
+from ArtificialPlayer import CPU
 from GameObjects.Game import Game
 from graphics import *
 
@@ -12,10 +12,11 @@ from GameObjects.Space import Space
 
 
 class GUI:
-    def __init__(self, _height, _width, _off, _cell_num):
+    def __init__(self, _height, _width, _off, _cell_num, ai_on = False):
         self.Game = Game(_cell_num)
-        
-        self.game_ai = GameEvaluator(6, self.Game.get_board())
+
+        self.AI = ai_on
+        self.game_ai = CPU(6, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width
@@ -218,7 +219,7 @@ class GUI:
     def set_message(self, message):
         self.instruction_display.setText(message)
 
-    def start_game(self, ai_on = False):
+    def start_game(self):
         """
         Runs the game.
         Assumes that functions, setup and setup_game have already been called.
@@ -261,6 +262,11 @@ class GUI:
                         self.Game.build_at_spot(picked_location)
                         self.update_block_display(picked_location)
                         break
+
+                if self.AI:
+                    num_count += 1
+                    i += 1
+                    self.Game.AI_Turn(self.game_ai)
 
             current_player = self.Game.get_player_at_index(picked_player)
 

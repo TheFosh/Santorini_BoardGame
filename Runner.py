@@ -7,7 +7,7 @@ import time
 
 from graphics import GraphWin
 
-from ArtificialPlayer import GameEvaluator
+from ArtificialPlayer import CPU
 from GUI import GUI
 from GameObjects.Space import Space
 
@@ -16,7 +16,7 @@ SCREEN_HEIGHT = 500
 WIDTH_OFFSET = 50
 BOARD_CELL_COUNT = 5
 
-GAME_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET, BOARD_CELL_COUNT)
+GAME_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET, BOARD_CELL_COUNT, ai_on=True)
 
 def main():
     GAME_GUI.setup()

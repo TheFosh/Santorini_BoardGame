@@ -8,7 +8,7 @@ from GameObjects.Board import Board
 from GameObjects.Turn import Turn
 
 
-class GameEvaluator:
+class CPU:
 
     def __init__(self, _d, _board: Board):
         self.Depth = _d              ## The depth to look into the future for
@@ -134,7 +134,7 @@ class GameEvaluator:
         player_one_score = self.evaluate_board(self.Depth, 1, self.alpha, self.beta)
         return player_one_score
 
-    def evaluate_board(self, d, p, alpha, beta):
+    def evaluate_board(self, d, p):
         if d == 0:
             #if  self.total_board_score() != 0:
             #print(self.total_board_score())
@@ -144,17 +144,23 @@ class GameEvaluator:
         if len(all_turns) == 0:
             return 0
 
+        best_score = -10000000
+
         for t in all_turns:
 
             self.simulate_turn(t)
-            score = -self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
+            score = -self.evaluate_board(d - 1, 3 - p)
             self.undo_turn(t)
 
-            if score >= beta:
-                return beta
+            best_score = max(score, best_score)
 
-            if score > alpha:
-                alpha = score
-                self.predicting_board = copy.deepcopy(self.future_board)
+        return best_score
 
-        return alpha
+    def CPU_Turn(self, pieces, board_used):
+        piece_one = pieces[0]
+        best_p1_score = -100000000000
+        piece_two = pieces[1]
+        best_p2_score = -100000000000
+
+
+        return Turn
