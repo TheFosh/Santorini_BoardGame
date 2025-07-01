@@ -5,6 +5,7 @@
 from GameObjects.Board import Board
 from GameObjects.HashableBoard import Hashboard
 from GameObjects.Player import Player
+from GameObjects.Turn import Turn
 
 
 class Game:
@@ -212,14 +213,18 @@ class Game:
             self.PLAYER_TURN = self.PLAYER_TURN % 2 + 1  ## Flip turn order
         return valid_spot
 
-    def AI_Turn(self, CPU):
+    def AI_Turn(self, CPU, board):
         """
         Given a CPU(AI), the game is simulated to have a turn taken as if someone decided
         a turn for the game.
         """
+        CPU.set_board(board)
+        decided_turn = CPU.get_best_turn()
+        p = decided_turn.get_piece()    # Player object chosen.
+        m = decided_turn.get_move()     # Space to move to.
+        b = decided_turn.get_build()    # Space to build on.
 
-        decided_turn = CPU.evaluate_board()
-
+        return decided_turn
 
 
     # NOT SURE IF THIS IS NEEDED.

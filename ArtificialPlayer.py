@@ -2,6 +2,8 @@
 ###################################################################
 ## Author: Jake Swanson
 import copy
+import math
+
 import numpy as np
 
 from GameObjects.Board import Board
@@ -11,20 +13,22 @@ from GameObjects.Turn import Turn
 class CPU:
 
     def __init__(self, _d, _board: Board):
-        self.Depth = _d              ## The depth to look into the future for
-        self.alpha = -np.inf
-        self.beta = np.inf
+        self.Depth = _d              ## The depth to look into the current for
         self.insight_count = 0  ## The count of how many possible moves the AI has looked at
         self.current_board = copy.deepcopy(_board)  ## The board to analyse
-        self.predicting_board = copy.deepcopy(_board)
-        self.future_board = copy.deepcopy(_board)
+
+    def get_depth(self):
+        return self.Depth
+
+    def get_board(self):
+        return self.current_board
 
     def get_player_pieces(self, player_num):
         pieces = []
-        for i in range(self.future_board.WIDTH):
-            for j in range(self.future_board.HEIGHT):
-                if self.future_board.grid[i][j].get_player() == player_num:
-                    pieces.append(self.future_board.grid[i][j])
+        for i in range(self.current_board.WIDTH):
+            for j in range(self.current_board.HEIGHT):
+                if self.current_board.grid[i][j].get_player() == player_num:
+                    pieces.append(self.current_board.grid[i][j])
         return pieces
 
     # Setter for setting the board the AI sees.
@@ -39,10 +43,10 @@ class CPU:
         all_turns = []
 
         for p in pieces:
-            all_moves = self.future_board.get_spaces_around(p)
-            possible_moves = self.future_board.move_filter(all_moves, p)
+            all_moves = self.current_board.get_spaces_around(p)
+            possible_moves = self.current_board.move_filter(all_moves, p)
             for m in possible_moves:
-                possible_builds = self.future_board.get_spaces_around(m)
+                possible_builds = self.current_board.get_spaces_around(m)
                 for b in possible_builds:
                     all_turns.append(Turn(p, m, b))
 
@@ -56,20 +60,23 @@ class CPU:
 
         p1_pieces = self.get_player_pieces(1)
         p2_pieces = self.get_player_pieces(2)
-        player_one_score = (self.winning_score(p1_pieces) +
-                            self.near_blocks_score(p1_pieces) +
-                            self.climbing_score(p1_pieces))
-        player_two_score = (self.winning_score(p2_pieces) +
-                            self.near_blocks_score(p2_pieces) +
-                            self.climbing_score(p2_pieces))
+        player_one_score = (self.winning_score(p1_pieces) + self.climbing_score(p1_pieces))
+                            #self.near_blocks_score(p1_pieces) +
+                            #self.climbing_score(p1_pieces))
+        player_two_score = (self.winning_score(p2_pieces) + self.climbing_score(p2_pieces))
+                            #self.near_blocks_score(p2_pieces) +
+                            #self.climbing_score(p2_pieces))
+        #print("p1: " + str(player_one_score))
 
-        return player_one_score - player_two_score
+        #print("p2: " + str(player_two_score))
+
+        return player_two_score - player_one_score
 
     def near_blocks_score(self, pieces):
         score = 0
 
         for p in pieces:
-            all_moves = self.future_board.get_spaces_around(p)
+            all_moves = self.current_board.get_spaces_around(p)
             climbable_moves = 0
             for m in all_moves:
                 if m.get_level() + 1 == p.get_level():
@@ -82,14 +89,15 @@ class CPU:
     def climbing_score(self, pieces):
         total_score = 0
         for p in pieces:
-            total_score += p.get_level() * 50
+            if p.get_level() < 4:
+                total_score += p.get_level() * 50
 
         return total_score
 
     def winning_score(self, pieces):
         for p in pieces:
             if p.get_level() == 3:
-                return 100000
+                return 10000000
 
         return 0
 
@@ -100,20 +108,20 @@ class CPU:
         valid turn for a player.
         """
         p_num = turn.get_piece().get_player()
-        self.future_board.set_grid_player(turn.get_piece(), 0)
-        self.future_board.set_grid_player(turn.get_move(), p_num)
-        self.future_board.build_on_space(turn.get_build())
+        self.current_board.set_grid_player(turn.get_piece(), 0)
+        self.current_board.set_grid_player(turn.get_move(), p_num)
+        self.current_board.build_on_space(turn.get_build())
 
     def undo_turn(self, turn):
         p_num = turn.get_move().get_player()
-        self.future_board.set_grid_player(turn.get_piece(), p_num)
-        self.future_board.set_grid_player(turn.get_move(), 0)
-        self.future_board.undo_build_on_space(turn.get_build())
+        self.current_board.set_grid_player(turn.get_piece(), p_num)
+        self.current_board.set_grid_player(turn.get_move(), 0)
+        self.current_board.undo_build_on_space(turn.get_build())
 
     def check_new_board(self, given_board):
         if not self.current_board.same_board(given_board):
             self.current_board = copy.deepcopy(given_board)
-            self.future_board = copy.deepcopy(given_board)
+            self.current_board = copy.deepcopy(given_board)
             self.predicting_board = copy.deepcopy(given_board)
             self.insight_count = 0
 
@@ -126,15 +134,27 @@ class CPU:
         """
         self.check_new_board(given_board)
         player_one_score = self.evaluate_board(self.Depth, 1, self.alpha, self.beta)
-        self.future_board = copy.deepcopy(self.predicting_board)
+        self.current_board = copy.deepcopy(self.predicting_board)
         return player_one_score
 
-    def evaluate_board_full(self, given_board):
-        self.set_board(given_board)
-        player_one_score = self.evaluate_board(self.Depth, 1, self.alpha, self.beta)
-        return player_one_score
+    def evaluate_board(self, d, p, alpha, beta):
+        # print("Alpha: " + str(alpha))
+        # print("Beta: " + str(beta))
+        """
+        Recursive method of evaluating board states of a game of Santorini.
+        Looks into the current of the depth given.
+        Args:
+            d: Depth of search
+            p: number representing a player. Supposed to be a 1 or a 2.
+            alpha: Alpha value in pruning technique.
+            beta: Beta value in pruning technique.
 
-    def evaluate_board(self, d, p):
+        Returns: Integer representing a score of the current board.
+
+
+
+        """
+
         if d == 0:
             #if  self.total_board_score() != 0:
             #print(self.total_board_score())
@@ -144,23 +164,42 @@ class CPU:
         if len(all_turns) == 0:
             return 0
 
-        best_score = -10000000
-
         for t in all_turns:
 
             self.simulate_turn(t)
-            score = -self.evaluate_board(d - 1, 3 - p)
+            score = -self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
             self.undo_turn(t)
 
-            best_score = max(score, best_score)
+            if score >= beta:
+                return beta
 
-        return best_score
+            alpha = max(score, alpha)
+        return alpha
 
-    def CPU_Turn(self, pieces, board_used):
-        piece_one = pieces[0]
-        best_p1_score = -100000000000
-        piece_two = pieces[1]
-        best_p2_score = -100000000000
+    def get_best_turn(self, p=2):
+        """
+        Method made to find the best turn a player can make on a turn.
+        Args:
+            p: A number representing which player is currently playing. By default, it player 2.
 
+        Returns: A Turn object representing the best course of action the AI should make.
+        """
+        poss_turns = self.search_moves(p)
+        turn_count = len(poss_turns)
+        for i in range(len(poss_turns)):
+            self.simulate_turn(poss_turns[i])
+            score = self.evaluate_board(self.get_depth(), p, -math.inf, math.inf)
+            poss_turns[i].set_evaluation(score)
+            self.undo_turn(poss_turns[i])
+            poss_turns[i].set_id(i+1)
+            print(str((i+1)/turn_count) + "%")
 
-        return Turn
+        decided_turn = Turn()
+
+        for t in poss_turns:
+            if t.get_evaluation() > decided_turn.get_evaluation():
+                decided_turn = t
+
+        #print(poss_turns)
+        print(decided_turn)
+        return decided_turn

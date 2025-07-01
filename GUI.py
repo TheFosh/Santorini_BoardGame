@@ -16,7 +16,7 @@ class GUI:
         self.Game = Game(_cell_num)
 
         self.AI = ai_on
-        self.game_ai = CPU(6, self.Game.get_board())
+        self.game_ai = CPU(4, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width
@@ -234,39 +234,48 @@ class GUI:
         while True:
             # Current picked player number
             picked_player = -1
-            for i in range(floor(len(self.Game.get_order()) / 2)):
-                current_board = self.Game.get_board()
-                while True:
-                    self.set_message("Player " + str(i + 1) + ", pick a piece.")
-                    chosen_point = self.ask_for_grid_point(self.get_window())
-                    if current_board.valid_player_select(chosen_point, i + 1):
-                        ## Successfully chosen a player
-                        chosen_player_piece = current_board.get_chosen_grid_space(chosen_point)
-                        picked_player = self.Game.get_player_at_spot(chosen_player_piece)
-                        break
+            num_players = floor(len(self.Game.get_order()) / 2)
+            for i in range(num_players):
+                if not self.AI or (self.AI and i + 1 == 1):
+                    current_board = self.Game.get_board()
+                    while True:
+                        self.set_message("Player " + str(i + 1) + ", pick a piece.")
+                        chosen_point = self.ask_for_grid_point(self.get_window())
+                        if current_board.valid_player_select(chosen_point, i + 1):
+                            ## Successfully chosen a player
+                            chosen_player_piece = current_board.get_chosen_grid_space(chosen_point)
+                            picked_player = self.Game.get_player_at_spot(chosen_player_piece)
+                            break
 
-                move_options = self.Game.get_move_spots(picked_player)
-                while True:
-                    self.set_message("Move selected piece.")
-                    picked_location = self.ask_for_grid_point(self.get_window())
-                    if self.Game.spot_in_list(picked_location, move_options):
-                        self.Game.move_player(picked_player, picked_location)
-                        self.update_player_display(picked_player, picked_location)
-                        break
+                    move_options = self.Game.get_move_spots(picked_player)
+                    while True:
+                        self.set_message("Move selected piece.")
+                        picked_location = self.ask_for_grid_point(self.get_window())
+                        if self.Game.spot_in_list(picked_location, move_options):
+                            self.Game.move_player(picked_player, picked_location)
+                            self.update_player_display(picked_player, picked_location)
+                            break
 
-                build_options = self.Game.get_build_spots(picked_player)
-                while True:
-                    self.set_message("Build around selected piece.")
-                    picked_location = self.ask_for_grid_point(self.get_window())
-                    if self.Game.spot_in_list(picked_location, build_options):
-                        self.Game.build_at_spot(picked_location)
-                        self.update_block_display(picked_location)
-                        break
+                    build_options = self.Game.get_build_spots(picked_player)
+                    while True:
+                        self.set_message("Build around selected piece.")
+                        picked_location = self.ask_for_grid_point(self.get_window())
+                        if self.Game.spot_in_list(picked_location, build_options):
+                            self.Game.build_at_spot(picked_location)
+                            self.update_block_display(picked_location)
+                            break
 
-                if self.AI:
-                    num_count += 1
-                    i += 1
-                    self.Game.AI_Turn(self.game_ai)
+                    if self.AI:
+                        num_count += 1
+                        turn = self.Game.AI_Turn(self.game_ai, self.Game.get_board())
+                        p_ind = self.Game.get_player_at_spot(turn.get_piece())
+                        m_sp = turn.get_move()
+                        self.Game.move_player(p_ind, m_sp)
+                        self.update_player_display(p_ind, m_sp)
+                        b_sp = turn.get_build()
+                        self.Game.build_at_spot(b_sp)
+                        self.update_block_display(b_sp)
+                        continue
 
             current_player = self.Game.get_player_at_index(picked_player)
 
@@ -275,7 +284,6 @@ class GUI:
 
             num_count += 1
 
-            print(self.game_ai.evaluate_board_full(self.Game.get_board()))
 
         print("game over")
 
