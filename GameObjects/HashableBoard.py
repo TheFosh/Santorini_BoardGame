@@ -24,6 +24,12 @@ class Hashboard:
     def get_position_num(self, x, y):
         return x + y * self.dimensions
 
+    def getX(self, n):
+        return n % self.dimensions
+
+    def getY(self, n):
+        return n / self.dimensions
+
     def get_width_height(self):
             return self.dimensions
 
@@ -38,7 +44,7 @@ class Hashboard:
         return int(d_spot / 8)
 
     def get_chosen_grid_space(self, x, y):
-        """Given a point, the corresponding grid space is returned"""
+        """Given a point, the corresponding data in the space is returned"""
         return self.hash_board[self.get_position_num(x, y)]
 
     def set_grid_player(self, x, y, player_num):
@@ -130,13 +136,13 @@ class Hashboard:
         Given Player starting location and number data, and a new location
         data, the board is updated on where the player is being moved to.
         """
-        self.grid[p_x][p_y].set_player(0) # Old player location updated to 0 for no player.
-        self.grid[new_x][new_y].set_player(p_n) # New player location updated to have the player number added.
+        self.hash_board[p_x + 5 * p_y] = self.decimal_to_binary(0) # Old player location updated to 0 for no player.
+        self.hash_board[new_x + 5 * new_y] = self.decimal_to_binary(p_n) # New player location updated to have the player number added.
 
     def build_on_space(self, x, y):
-        if self.get_space_level(x,y) < 4:
-            self.hash_board[x][y] += 1
+        if self.binary_to_decimal(self.get_space_level(x,y)) < 4:
+            self.hash_board[self.get_position_num(x,y)] += 1
 
     def undo_build_on_space(self, x, y):
-        if self.get_space_level(x, y) > 0:
-            self.hash_board[x][y] -= 1
+        if self.binary_to_decimal(self.get_space_level(x, y)) > 0:
+            self.hash_board[self.get_position_num(x,y)] -= 1

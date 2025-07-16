@@ -12,11 +12,12 @@ from GameObjects.Space import Space
 
 
 class GUI:
-    def __init__(self, _height, _width, _off, _cell_num, ai_on = False):
-        self.Game = Game(_cell_num)
+    def __init__(self, _height, _width, _off, _cell_num, ai_on = False, _is_hash = False):
+        self.Game = Game(_cell_num, is_hash= _is_hash)
 
+        self.IS_HASH = _is_hash
         self.AI = ai_on
-        self.game_ai = CPU(4, self.Game.get_board())
+        self.game_ai = CPU(4)
 
         self.screen_height = _height
         self.screen_width = _width
@@ -237,7 +238,11 @@ class GUI:
             num_players = floor(len(self.Game.get_order()) / 2)
             for i in range(num_players):
                 if not self.AI or (self.AI and i + 1 == 1):
-                    current_board = self.Game.get_board()
+                    current_board = None
+                    if not self.IS_HASH:
+                        current_board = self.Game.get_board()
+                    else:
+                        current_board = self.Game.get_hashboard()
                     while True:
                         self.set_message("Player " + str(i + 1) + ", pick a piece.")
                         chosen_point = self.ask_for_grid_point(self.get_window())
@@ -267,7 +272,7 @@ class GUI:
 
                     if self.AI:
                         num_count += 1
-                        turn = self.Game.AI_Turn(self.game_ai, self.Game.get_board())
+                        turn = self.Game.AI_Turn(self.game_ai)
                         p_ind = self.Game.get_player_at_spot(turn.get_piece())
                         m_sp = turn.get_move()
                         self.Game.move_player(p_ind, m_sp)

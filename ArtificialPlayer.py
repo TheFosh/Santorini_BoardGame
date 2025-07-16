@@ -9,13 +9,18 @@ import numpy as np
 from GameObjects.Board import Board
 from GameObjects.Turn import Turn
 
-
 class CPU:
 
-    def __init__(self, _d, _board: Board):
+    def __init__(self, _d):
         self.Depth = _d              ## The depth to look into the current for
         self.insight_count = 0  ## The count of how many possible moves the AI has looked at
-        self.current_board = copy.deepcopy(_board)  ## The board to analyse
+        self.current_board = None  ## The board to analyse
+
+        self.PLAYER_NUM_COUNT = 1
+        self.BUILD_NUM_COUNT = 1
+        self.SPACES_COUNT = 25
+        self.BITS = (self.PLAYER_NUM_COUNT + self.BUILD_NUM_COUNT) * self.SPACES_COUNT
+        self.hashArray = []
 
     def get_depth(self):
         return self.Depth
@@ -31,6 +36,35 @@ class CPU:
                     pieces.append(self.current_board.grid[i][j])
         return pieces
 
+    def get_dec_equivalence(self):
+        board = self.get_board()
+        binary_state = ""
+        for row in board.grid:
+            for spot in row:
+                pn = spot.get_player()
+                player_dec = str(pn)
+                bn = spot.get_level()
+                build_dec = str(bn)
+                binary_state += player_dec + build_dec
+
+        return binary_state
+
+    def get_hash_eval(self, hash_ind):
+        all_data = self.get_hash_at_loc(hash_ind)
+        current_eval = int(all_data[self.BITS:])
+        return current_eval
+
+    def get_hash_at_loc(self, hash_ind):
+        for i in range(len(self.hashArray)):
+            hash_data = self.hashArray[i]
+            cur_hash_ind = hash_data[:self.BITS]
+            if cur_hash_ind.__eq__(hash_ind):
+                return hash_data
+        return "0" * self.BITS + "-1"
+
+    def set_board_eval_hash(self, hash_ind, board_eval):
+        self.hashArray.append(hash_ind + str(board_eval))
+
     # Setter for setting the board the AI sees.
     def set_board(self, given_board):
         self.current_board = copy.deepcopy(given_board)
@@ -43,12 +77,15 @@ class CPU:
         all_turns = []
 
         for p in pieces:
-            all_moves = self.current_board.get_spaces_around(p)
-            possible_moves = self.current_board.move_filter(all_moves, p)
-            for m in possible_moves:
-                possible_builds = self.current_board.get_spaces_around(m)
-                for b in possible_builds:
-                    all_turns.append(Turn(p, m, b))
+            if p.get_level() < 3:
+                all_moves = self.current_board.get_spaces_around(p)
+                possible_moves = self.current_board.move_filter(all_moves, p)
+                for m in possible_moves:
+                    possible_builds = self.current_board.get_spaces_around(m)
+                    for b in possible_builds:
+                        all_turns.append(Turn(p, m, b))
+            else:
+                return []
 
         return all_turns
 
@@ -66,9 +103,6 @@ class CPU:
         player_two_score = (self.winning_score(p2_pieces) + self.climbing_score(p2_pieces))
                             #self.near_blocks_score(p2_pieces) +
                             #self.climbing_score(p2_pieces))
-        #print("p1: " + str(player_one_score))
-
-        #print("p2: " + str(player_two_score))
 
         return player_two_score - player_one_score
 
@@ -152,22 +186,30 @@ class CPU:
         Returns: Integer representing a score of the current board.
 
 
-
+         IMPLEMENT THE HASH BOARD!!! IT'S SO SLOW ON IT'S OWN.
+            Hash board is not meant to be a separate way to play.
+            It is a storage for board combinations.
+            A board state = a number that points to a spot in an array.
         """
+        all_turns = self.search_moves(p)
 
-        if d == 0:
+        if d == 0 or len(all_turns) == 0:
+            if len(all_turns) == 0:
+                print(d)
             #if  self.total_board_score() != 0:
             #print(self.total_board_score())
             return self.total_board_score()
 
-        all_turns = self.search_moves(p)
-        if len(all_turns) == 0:
-            return 0
+        bit_board = self.get_dec_equivalence()
+        hash_eval = self.get_hash_eval(bit_board)
+        if hash_eval > -1:
+            return hash_eval
 
         for t in all_turns:
 
             self.simulate_turn(t)
-            score = -self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
+            score = (p * 2 - 3) * self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
+            self.set_board_eval_hash(bit_board, score)
             self.undo_turn(t)
 
             if score >= beta:

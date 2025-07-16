@@ -90,13 +90,6 @@ class Game:
             else:
                 return False
 
-    # MIGHT NOT BE IMPORTANT
-    # def set_character_spot(self, picked_space, player_iter):
-    #     """
-    #     Given an
-    #     """
-    #     self.all_players[player_iter].set_space(picked_space)
-
     def add_player(self, x, y, l):
         """
         Given the parameters of a Player object, one is created
@@ -118,8 +111,14 @@ class Game:
         """
 
         current_player = self.all_players[player_index]
-        possible_move_locations = self.Board.get_spaces_around(current_player)
-        possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
+        possible_move_locations = []
+        if not self.IS_HASH:
+            possible_move_locations = self.Board.get_spaces_around(current_player)
+            possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
+        else:
+            possible_move_locations = self.HashBoard.get_spaces_around(current_player.getX(), current_player.getY())
+            possible_move_locations = self.HashBoard.move_filter(possible_move_locations, current_player)
+
         return possible_move_locations
 
     def move_player(self, player_index, picked_location):
@@ -129,7 +128,15 @@ class Game:
         """
         current_player = self.all_players[player_index]
         # 'Board' object updates it's location data on the given player.
-        self.Board.update_player_space(current_player, picked_location)
+        if not self.IS_HASH:
+            self.Board.update_player_space(current_player, picked_location)
+        else:
+            c_x = current_player.getX()
+            c_y = current_player.getY()
+            c_n = current_player.get_player()
+            n_x = picked_location.getX()
+            n_y = picked_location.getY()
+            self.HashBoard.update_player_space(c_x,c_y,c_n,n_x,n_y)
         # Player in 'all_players' gets updated as well.
         self.all_players[player_index].set_cords(picked_location.getX(), picked_location.getY())
         self.all_players[player_index].set_level(picked_location.get_level())
@@ -142,7 +149,13 @@ class Game:
         Finds all spots around the indexed Player given for possible builds.
         """
         current_player = self.all_players[player_index]
-        possible_move_locations = self.Board.get_spaces_around(current_player)
+        possible_move_locations = []
+        if not self.IS_HASH:
+            possible_move_locations = self.Board.get_spaces_around(current_player)
+        else:
+            cx = current_player.getX()
+            cy = current_player.getY()
+            possible_move_locations = self.HashBoard.get_spaces_around(cx, cy)
         return possible_move_locations
 
     def spot_in_list(self, picked, options):
@@ -158,7 +171,12 @@ class Game:
         """
         Records and updates the 'Board' object with building a block level on given Space.
         """
-        self.Board.build_on_space(picked_location)
+        if not self.IS_HASH:
+            self.Board.build_on_space(picked_location)
+        else:
+            px = picked_location
+            py = picked_location
+            self.HashBoard.build_on_space(px, py)
 
     def pick_piece_turn(self, spot):
         """
@@ -180,13 +198,22 @@ class Game:
         Same as function 'pick_piece_turn' but used for 'Hash_Bord'
         """
         current_board = self.get_hashboard()
-        if current_board.valid_player_select(spot.getX(), spot.getY(), self.PLAYER_TURN):
-            ## Successfully chosen a player
-            chosen_player_piece = current_board.get_chosen_grid_space(spot.getX(), spot.getY())
-            self.PICKED_PLAYER = self.get_player_at_spot(chosen_player_piece)
-            self.MOVE = True
-            return True
-
+        if not self.IS_HASH:
+            if current_board.valid_player_select(spot.getX(), spot.getY(), self.PLAYER_TURN):
+                ## Successfully chosen a player
+                chosen_player_piece = current_board.get_chosen_grid_space(spot.getX(), spot.getY())
+                self.PICKED_PLAYER = self.get_player_at_spot(chosen_player_piece)
+                self.MOVE = True
+                return True
+        else:
+            spot_x = self.HashBoard.getX(spot)
+            spot_y = self.HashBoard.getY(spot)
+            if current_board.valid_player_select(spot_x, spot_y, self.PLAYER_TURN):
+                ## Successfully chosen a player
+                chosen_player_piece = current_board.get_chosen_grid_space(spot_x, spot_y)
+                self.PICKED_PLAYER = self.get_player_at_spot(chosen_player_piece)
+                self.MOVE = True
+                return True
         return False
 
     def move_piece_turn(self, spot):
@@ -213,12 +240,15 @@ class Game:
             self.PLAYER_TURN = self.PLAYER_TURN % 2 + 1  ## Flip turn order
         return valid_spot
 
-    def AI_Turn(self, CPU, board):
+    def AI_Turn(self, CPU):
         """
         Given a CPU(AI), the game is simulated to have a turn taken as if someone decided
         a turn for the game.
         """
-        CPU.set_board(board)
+        if not self.IS_HASH:
+            CPU.set_board(self.get_board())
+        else:
+            CPU.set_board(self.get_hashboard())
         decided_turn = CPU.get_best_turn()
         p = decided_turn.get_piece()    # Player object chosen.
         m = decided_turn.get_move()     # Space to move to.
