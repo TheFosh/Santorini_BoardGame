@@ -7,6 +7,7 @@ import math
 import numpy as np
 
 from GameObjects.Board import Board
+from GameObjects.HashableBoard import Hashboard
 from GameObjects.Turn import Turn
 
 class CPU:
@@ -66,7 +67,7 @@ class CPU:
         self.hashArray.append(hash_ind + str(board_eval))
 
     # Setter for setting the board the AI sees.
-    def set_board(self, given_board):
+    def set_board(self, given_board: Board | Hashboard):
         self.current_board = copy.deepcopy(given_board)
 
     def search_moves(self, relevant_player_num):
@@ -184,12 +185,6 @@ class CPU:
             beta: Beta value in pruning technique.
 
         Returns: Integer representing a score of the current board.
-
-
-         IMPLEMENT THE HASH BOARD!!! IT'S SO SLOW ON IT'S OWN.
-            Hash board is not meant to be a separate way to play.
-            It is a storage for board combinations.
-            A board state = a number that points to a spot in an array.
         """
         all_turns = self.search_moves(p)
 

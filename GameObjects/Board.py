@@ -21,7 +21,7 @@ class Board:
     def get_width_height(self):
         return self.WIDTH
 
-    def get_chosen_grid_space(self, chosen_space):
+    def get_chosen_grid_space(self, chosen_space: Space):
         """Given a Space, the corresponding Space data in the 'grid' is returned"""
         return self.grid[chosen_space.getX()][chosen_space.getY()]
 

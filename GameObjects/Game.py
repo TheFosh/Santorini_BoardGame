@@ -1,4 +1,4 @@
-## Object that runs and stores info for a single game ##
+## Objects that runs and stores info for a single game ##
 ## of Santorini                                       ##
 ########################################################
 ## Author: Jake Swanson
