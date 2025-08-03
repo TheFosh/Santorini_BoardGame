@@ -1,6 +1,14 @@
 ## Object representing the board of spaces in a game as a binary number ##
 ##########################################################################
 ## Author: Jake Swanson
+import numpy as np
+
+from GameObjects.Space import Space
+
+"""        TODO: IMPLEMENT THE HASH BOARD!!! IT'S SO SLOW ON IT'S OWN.
+            Hash board is not meant to be a separate way to play.
+            It is a storage for board combinations.
+            A board state = a number that points to a spot in an array."""
 
 class Hashboard:
     def __init__(self, side_cell_count):
@@ -8,16 +16,14 @@ class Hashboard:
 
         #### BOARD MEANING ####
         ## 1D array
-        ## Every 5 bits are a single cell
-        ## The first 2 of the 5 bits are representing the player number.
-        ## The last 3 are for the level of the space.
-        ## There should be 5 * 25 bits for every space on the board.
-        self.hash_board = [self.decimal_to_binary(0)] * side_cell_count**2
+        ## Every 2 numbers is one space on the board.
+        ## The first is the player number.
+        ## The second is the player level.
 
-    def decimal_to_binary(self, n):
-        return bin(n)[2:]
-    def binary_to_decimal(self, n):
-        return int(n, 2)
+        PL_COUNT = 1
+        BL_COUNT = 1
+        C_COUNT = side_cell_count ** 2
+        self.num_board = np.zeros((PL_COUNT + BL_COUNT) * C_COUNT)
 
     ########################################
     ########### GETTERS & SETTERS ##########
@@ -43,23 +49,25 @@ class Hashboard:
         d_spot = self.binary_to_decimal(b_spot)
         return int(d_spot / 8)
 
-    def get_chosen_grid_space(self, x, y):
+    def get_chosen_grid_space(self, chosen_space: Space) -> float:
         """Given a point, the corresponding data in the space is returned"""
-        return self.hash_board[self.get_position_num(x, y)]
+        x = chosen_space.getX()
+        y = chosen_space.getY()
+        return self.num_board[self.get_position_num(x, y)]
 
     def set_grid_player(self, x, y, player_num):
         """Sets given space to be the given player num."""
         pn = player_num * 8
-        binary_s = self.hash_board[self.get_position_num(x, y)]
+        binary_s = self.num_board[self.get_position_num(x, y)]
         decimal_s = self.binary_to_decimal(binary_s)
         building_b = decimal_s % 8
-        self.hash_board[self.get_position_num(x, y)] = self.decimal_to_binary(pn + building_b)
+        self.num_board[self.get_position_num(x, y)] = self.decimal_to_binary(pn + building_b)
 
     ########################################
 
     def same_board(self, check_board):
-        for i in range(len(self.hash_board)):
-            if check_board[i] != self.hash_board[i]:
+        for i in range(len(self.num_board)):
+            if check_board[i] != self.num_board[i]:
                 return False
         return True
 
@@ -114,7 +122,7 @@ class Hashboard:
             valid_spot = valid_spot and spot_check
             if valid_spot:
                 print(grid_index)
-                current_spot = self.hash_board[grid_index]
+                current_spot = self.num_board[grid_index]
                 possible_locations.append(current_spot)
 
         return possible_locations
@@ -136,13 +144,13 @@ class Hashboard:
         Given Player starting location and number data, and a new location
         data, the board is updated on where the player is being moved to.
         """
-        self.hash_board[p_x + 5 * p_y] = self.decimal_to_binary(0) # Old player location updated to 0 for no player.
-        self.hash_board[new_x + 5 * new_y] = self.decimal_to_binary(p_n) # New player location updated to have the player number added.
+        self.num_board[p_x + 5 * p_y] = self.decimal_to_binary(0) # Old player location updated to 0 for no player.
+        self.num_board[new_x + 5 * new_y] = self.decimal_to_binary(p_n) # New player location updated to have the player number added.
 
     def build_on_space(self, x, y):
         if self.binary_to_decimal(self.get_space_level(x,y)) < 4:
-            self.hash_board[self.get_position_num(x,y)] += 1
+            self.num_board[self.get_position_num(x,y)] += 1
 
     def undo_build_on_space(self, x, y):
         if self.binary_to_decimal(self.get_space_level(x, y)) > 0:
-            self.hash_board[self.get_position_num(x,y)] -= 1
+            self.num_board[self.get_position_num(x,y)] -= 1

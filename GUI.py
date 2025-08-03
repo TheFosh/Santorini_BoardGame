@@ -8,12 +8,16 @@ from ArtificialPlayer import CPU
 from GameObjects.Game import Game
 from graphics import *
 
+from GameObjects.NumGame import NumGame
 from GameObjects.Space import Space
 
 
 class GUI:
     def __init__(self, _height, _width, _off, _cell_num, ai_on = False, _is_hash = False):
-        self.Game = Game(_cell_num, is_hash= _is_hash)
+        if _is_hash:
+            self.Game = NumGame(_cell_num, ai_on = ai_on)
+        else:
+            self.Game = Game(_cell_num, is_hash=_is_hash)
 
         self.IS_HASH = _is_hash
         self.AI = ai_on
@@ -159,30 +163,43 @@ class GUI:
             ## Loops until all characters are validly placed
             while True:
                 chosen_cell = self.ask_for_grid_point(win)
-                ## Checks if picked spot is valid
-                if self.Game.pick_player_spot(chosen_cell, pieces[i]):
-                    middle_spot = self.get_selected_display(chosen_cell)
-                    added_player_index = self.Game.get_player_at_spot(chosen_cell)
-                    added_player = self.Game.get_player_at_index(added_player_index)
-                    current_display = added_player.get_display(middle_spot)
-                    self.player_displays.append(current_display)
+                if not is_hash:
+                    ## Checks if picked spot is valid
+                    if self.Game.pick_player_spot(chosen_cell, pieces[i]):
+                        middle_spot = self.get_selected_display(chosen_cell)
+                        added_player_index = self.Game.get_player_at_spot(chosen_cell)
+                        added_player = self.Game.get_player_at_index(added_player_index)
+                        current_display = added_player.get_display(middle_spot)
+                        self.player_displays.append(current_display)
 
-                    self.player_displays.__getitem__(i).draw(win)
-                    break
+                        self.player_displays.__getitem__(i).draw(win)
+                        break
+                    else:
+                        continue
                 else:
-                    continue
+                    if self.Game.pick_player_spot(chosen_cell, pieces[i]):
+                        middle_spot = self.get_selected_display(chosen_cell)
+                        added_player_index = self.Game.get_player_at_spot(chosen_cell)
+                        added_player = self.Game.get_player_at_index(added_player_index)
+                        current_display = added_player.get_display(middle_spot)
+                        self.player_displays.append(current_display)
 
-    def ask_for_grid_point(self, win):
+                        self.player_displays.__getitem__(i).draw(win)
+                        break
+                    else:
+                        continue
+
+    def ask_for_grid_point(self, win) -> Space | float:
         mouse = win.getMouse()
         return self.convert_display_on_grid(mouse.getX(), mouse.getY())
 
-    def convert_display_on_grid(self, _disX, _disY):
+    def convert_display_on_grid(self, _disX, _disY) -> Space:
         chosen_x = floor((_disX - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
         chosen_y = floor((_disY - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
 
         current_board = self.Game.get_board()
-
-        return current_board.grid[chosen_x][chosen_y]
+        tempSpace = Space(chosen_x,chosen_y)
+        return current_board.get_chosen_grid_space(tempSpace)
 
     def convert_to_display(self, grid_spot):
         disX = grid_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing) + self.BOARD_PADDING
