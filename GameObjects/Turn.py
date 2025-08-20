@@ -1,9 +1,12 @@
+from GameObjects.Space import Space
+
+
 class Turn:
     def __init__(self, _piece = None, _move = None , _build = None):
         self.id = 0
-        self.piece = _piece
-        self.move = _move
-        self.build = _build
+        self.piece: Space = _piece
+        self.move: Space = _move
+        self.build: Space = _build
         self.evaluation = -1000000000000
 
     def __repr__(self):

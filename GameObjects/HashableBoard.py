@@ -1,14 +1,11 @@
 ## Object representing the board of spaces in a game as a binary number ##
 ##########################################################################
 ## Author: Jake Swanson
+from array import ArrayType
+
 import numpy as np
 
 from GameObjects.Space import Space
-
-"""        TODO: IMPLEMENT THE HASH BOARD!!! IT'S SO SLOW ON IT'S OWN.
-            Hash board is not meant to be a separate way to play.
-            It is a storage for board combinations.
-            A board state = a number that points to a spot in an array."""
 
 class Hashboard:
     def __init__(self, side_cell_count):
@@ -20,137 +17,184 @@ class Hashboard:
         ## The first is the player number.
         ## The second is the player level.
 
-        PL_COUNT = 1
-        BL_COUNT = 1
-        C_COUNT = side_cell_count ** 2
-        self.num_board = np.zeros((PL_COUNT + BL_COUNT) * C_COUNT)
+        PL_COUNT = 1 # Player digit count
+        BL_COUNT = 1 # Block digit count
+        self.info_digits = PL_COUNT + BL_COUNT
+        C_COUNT = side_cell_count ** 2 # Cell count on board
+        self.num_board = np.zeros(self.info_digits * C_COUNT)
 
-    ########################################
-    ########### GETTERS & SETTERS ##########
-    def get_position_num(self, x, y):
-        return x + y * self.dimensions
+    ###########################################
+    ########### GETTERS & SETTERS #############
+    ###########################################
+    def get_chosen_grid_space(self, chosen_space: list[int]) -> list[int]:
+        """Given a Space, the corresponding Space data in the 'grid' is returned"""
+        x = chosen_space[0]
+        y = chosen_space[1]
+        return self.get_all_data(x, y)
 
-    def getX(self, n):
-        return n % self.dimensions
+    def get_dimensions(self) -> int:
+        return self.dimensions
 
-    def getY(self, n):
-        return n / self.dimensions
+    def get_array_location(self, _x: int, _y: int) -> int:
+        """
+        Given two integers representing cartesian coordinates, they are converted to
+        coordinates in the one dimensional array.
 
-    def get_width_height(self):
-            return self.dimensions
+        Args:
+            _x: Horizontal coordinate
+            _y: Vertical coordinate
 
-    def get_space_level(self, x, y):
-        b_spot = self.get_chosen_grid_space(x, y)
-        d_spot = self.binary_to_decimal(b_spot)
-        return int(d_spot % 8)
+        Returns: An integer representing a place in a one dimensional array.
 
-    def get_space_player_num(self, x, y):
-        b_spot = self.get_chosen_grid_space(x, y)
-        d_spot = self.binary_to_decimal(b_spot)
-        return int(d_spot / 8)
+        """
 
-    def get_chosen_grid_space(self, chosen_space: Space) -> float:
-        """Given a point, the corresponding data in the space is returned"""
-        x = chosen_space.getX()
-        y = chosen_space.getY()
-        return self.num_board[self.get_position_num(x, y)]
+        return self.info_digits * (_x + _y * self.dimensions)
 
-    def set_grid_player(self, x, y, player_num):
-        """Sets given space to be the given player num."""
-        pn = player_num * 8
-        binary_s = self.num_board[self.get_position_num(x, y)]
-        decimal_s = self.binary_to_decimal(binary_s)
-        building_b = decimal_s % 8
-        self.num_board[self.get_position_num(x, y)] = self.decimal_to_binary(pn + building_b)
+    def get_space_from_index(self, _ind: int) -> [int]:
+        x: int = _ind % self.dimensions
+        y: int = _ind / self.dimensions
 
-    ########################################
+        return [x,y]
 
-    def same_board(self, check_board):
-        for i in range(len(self.num_board)):
-            if check_board[i] != self.num_board[i]:
-                return False
-        return True
+    def get_data(self, _x: int, _y: int, _b: int) -> int:
+        """
+        Since player and build height getters are quite similar, they are combined. The "_b" parameter
+        takes care of the difference between the two.
 
-    def valid_for_open_space(self, x, y):
-        return (self.space_on_board(x, y) and
-                int(self.get_space_player_num(x, y)) == 0 and
-                self.get_space_level(x, y) < 4)
+        Args:
+            _x: Horizontal coordinate
+            _y: Vertical coordinate
+            _b: Is building or not. ONLY SHOULD BE 1 or 0. This would indicate a true or false statement.
 
-    def space_on_board(self, _x, _y):
+        Returns: The integer data in the num board representing the requested info at the requested spot.
+
+        """
+        index: int = int(self.get_array_location(_x, _y)) + _b # +_b for the build/player location
+        return self.num_board[index]
+
+    def get_all_data(self, _x: int, _y: int) -> list[int]:
+        p_index: int = self.get_array_location(_x, _y)
+        return [_x, _y, self.num_board[p_index], self.num_board[p_index +1]]
+
+    def set_data(self, _x: int, _y: int, _b: int, _d: int) -> None:
+        """
+        Since player and build height setters are quite similar, they are combined. The "_b" parameter
+        takes care of the difference between the two. The "_d" parameter is what data you are setting.
+
+        Args:
+            _x: Horizontal coordinate.
+            _y: Vertical coordinate.
+            _b: Is building or not. ONLY SHOULD BE 1 or 0. This would indicate a true or false statement.
+            _d: Data to be set at given location.
+
+        Returns: None
+
+        """
+        build_index: int = self.get_array_location(_x, _y) + _b # +_b for the build/player location
+        self.num_board[build_index] = _d
+
+
+    #=========================================#
+    def is_space_on_board(self, _x: int, _y: int) -> bool:
+        """
+        Checks if the given integers are outside the dimensions of the 'grid'.
+        """
         return (self.dimensions > _x >= 0 and
                 self.dimensions > _y >= 0)
 
-    def valid_player_select(self, x, y, correct_num):
+    def valid_player_select(self, given_space: Space | list[int], correct_num: int):
         """
-        Returns whether a player figure is
-        in the selected spot and is the correct
-        number.
+        Given a Space, the spot is checked whether a Player figure is in that spot.
+        This is done by checking the Player num of the Space.
         """
-        valid_space = False
+        x = given_space[0]
+        y = given_space[1]
+        valid_space = self.is_space_on_board(x, y)
         correct_player = False
-        if self.space_on_board(x, y):
-            valid_space = self.space_on_board(x, y)
-            correct_player = self.get_space_player_num(x, y) == correct_num
+        if valid_space:
+            correct_player = self.get_data(x, y, 0) == correct_num
         return valid_space and correct_player
 
-    def is_too_tall(self, x, y, center_level):
-        selected_level = self.get_space_level(x, y)
-        return selected_level <= center_level or center_level + 1 == selected_level
+    def valid_for_open_space(self, _x, _y):
+        """
+        Given two integers representing coordinates in grid space,
+        the located spot in 'num_board' is determined to be a valid spot for selecting a player's location or not.
+        These conditions are determined by Santorini's rules.
+        """
+        return (self.is_space_on_board(_x, _y) and
+                self.get_data(_x, _y, 0) == 0 and
+                self.get_data(_x, _y, 1) < 4)
 
-    def get_spaces_around(self, x, y):
+    def get_spaces_around(self, starting_location) -> list[list[int]]:
+        """
+    `   Given a Space representing the starting location of a Player,
+        all Integers representing spaces around that spot in the 'num_board' are returned in an Array object.
+        """
         possible_locations = []
-        OPERATORS = [-6,-5,-4,-1,1,4,5,6]
+        center_x = starting_location.getX()
+        center_y = starting_location.getY()
 
-        for o in OPERATORS:
-            grid_index = self.get_position_num(x, y)
+        center = int(self.get_array_location(center_x, center_y) / 2) + 1
+        print(center)
+        operations = [6,5,4,1,-1,-4,-5,-6]
 
-            right = grid_index % 5 == 4
-            left = grid_index % 5 == 0
-            top = grid_index < 5
-            bottom = grid_index >= 20
+        for o in operations:
+            if center % 5 == 0 and (o == -4 or o == 1 or o == 6):
+                continue
+            elif center % 5 == 1 and (o == 4 or o == -1 or o == -6):
+                continue
 
-            spot_check = True
-            if ((right and(o == -4 or o == 1 or o == 6)) or
-                    (left and(o == -1 or o == -6 or o == 4)) or
-                    (top and(o == -4 or o == -5 or o == -6)) or
-                    (bottom and(o == 4 or o == 5 or o == 6))):
-                    spot_check = False
-            else:
-                grid_index += o
-
-            valid_spot = self.valid_for_open_space(int(grid_index% self.dimensions), int(grid_index/self.dimensions))
-            valid_spot = valid_spot and spot_check
-            if valid_spot:
-                print(grid_index)
-                current_spot = self.num_board[grid_index]
-                possible_locations.append(current_spot)
+            if center > 20 and (o == 4 or o == 5 or o == 6):
+                continue
+            elif center < 6 and (o == -4 or o == -5 or o == -6):
+                continue
+            index_spot = center + o
+            array_spot = self.get_space_from_index(index_spot)
+            possible_locations.append(array_spot)
 
         return possible_locations
 
-    def move_filter(self, possible_spots, starting_location):
+    def move_filter(self, possible_spots: list[list[int]], starting_location):
+        """
+
+        """
         filtered_list = []
-        start_x = int(starting_location% self.dimensions)
-        start_y = int(starting_location/self.dimensions)
-        starting_level = self.get_space_level(start_x, start_y)
+        starting_level = starting_location.get_level()
         for spot in possible_spots:
-            s_x = int(starting_location% self.dimensions)
-            s_y = int(starting_location/self.dimensions)
-            if self.is_too_tall(s_x, s_y, starting_level):
+            height = self.get_data(spot[0],spot[1], 1)
+            if self.is_too_tall(height , starting_level):
                 filtered_list.append(spot)
         return filtered_list
 
-    def update_player_space(self, p_x, p_y, p_n, new_x, new_y):
+    def is_too_tall(self, _h, center_level):
         """
-        Given Player starting location and number data, and a new location
-        data, the board is updated on where the player is being moved to.
+
         """
-        self.num_board[p_x + 5 * p_y] = self.decimal_to_binary(0) # Old player location updated to 0 for no player.
-        self.num_board[new_x + 5 * new_y] = self.decimal_to_binary(p_n) # New player location updated to have the player number added.
+        selected_level = _h
+        return selected_level <= center_level or center_level + 1 == selected_level
 
-    def build_on_space(self, x, y):
-        if self.binary_to_decimal(self.get_space_level(x,y)) < 4:
-            self.num_board[self.get_position_num(x,y)] += 1
+    def update_player_space(self, player: Space, new_spot: Space) -> None:
+        """
 
-    def undo_build_on_space(self, x, y):
-        if self.binary_to_decimal(self.get_space_level(x, y)) > 0:
-            self.num_board[self.get_position_num(x,y)] -= 1
+        """
+        ox = player.getX()
+        oy = player.getY()
+        self.set_data(ox,oy,0, 0)
+
+        nx = new_spot.getX()
+        ny = new_spot.getY()
+        pn = new_spot.get_player()
+        self.set_data(nx, ny, 0, pn)
+
+    def build_on_space(self, picked_space:Space) -> bool:
+        """
+        Calls 'build_level' function at the given Space in the 'grid'.
+        """
+        if picked_space.level < 4:
+            x = picked_space.getX()
+            y = picked_space.getY()
+            current_level = self.get_data(x, y, 1)
+            self.set_data(x, y, 1, current_level + 1)
+
+        return picked_space.level < 4
+

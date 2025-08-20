@@ -21,7 +21,7 @@ class GUI:
 
         self.IS_HASH = _is_hash
         self.AI = ai_on
-        self.game_ai = CPU(4)
+        self.game_ai = CPU(1, self.Game.get_board()) # NUMBER SHOULD BE ODD
 
         self.screen_height = _height
         self.screen_width = _width
@@ -50,13 +50,24 @@ class GUI:
     def get_screen_height(self):
         return self.screen_height
 
-    def get_selected_display(self, cord_spot):
+    def get_selected_display(self, cord_spot: Space | list[int]):
         """
         Converts given grid coordinates into display coordinates.
         Display coordinates should be centered in the chosen cell.
         """
-        display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing)
-        display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing)
+        display_x_cord = 0
+        display_y_cord = 0
+        if not self.IS_HASH:
+            display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getX() * (
+                    self.COLUMN_WIDTH + self.column_spacing)
+            display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing/ 2 + cord_spot.getY() * (
+                    self.COLUMN_WIDTH + self.column_spacing)
+        else:
+            display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot[0] * (
+                        self.COLUMN_WIDTH + self.column_spacing)
+            display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot[1] * (
+                        self.COLUMN_WIDTH + self.column_spacing)
+
         return Space(display_x_cord, display_y_cord)
 
     def get_board(self):
@@ -81,7 +92,7 @@ class GUI:
 
         # Displaying the grid of cells on the board
         current_board = self.Game.get_board()
-        cell_per_row = current_board.get_width_height()
+        cell_per_row = current_board.get_dimensions()
 
         ## For the bars that are tall. Horizontal refers to how they are spaced.
         horizontal_grid = [Rectangle
@@ -105,7 +116,7 @@ class GUI:
 
 
         ## Makes blocks that are located on the board
-        pow(tempBoard.get_width_height(), 2)
+        pow(tempBoard.get_dimensions(), 2)
         for i in range(25):
             x_point_calculation = self.BOARD_PADDING + self.COLUMN_WIDTH +(self.COLUMN_WIDTH * int(i % 5) + self.column_spacing * int(i % 5))
             y_point_calculation = self.BOARD_PADDING + self.COLUMN_WIDTH +(self.COLUMN_WIDTH * int(i / 5) + self.column_spacing * int(i / 5))
@@ -163,43 +174,29 @@ class GUI:
             ## Loops until all characters are validly placed
             while True:
                 chosen_cell = self.ask_for_grid_point(win)
-                if not is_hash:
-                    ## Checks if picked spot is valid
-                    if self.Game.pick_player_spot(chosen_cell, pieces[i]):
-                        middle_spot = self.get_selected_display(chosen_cell)
-                        added_player_index = self.Game.get_player_at_spot(chosen_cell)
-                        added_player = self.Game.get_player_at_index(added_player_index)
-                        current_display = added_player.get_display(middle_spot)
-                        self.player_displays.append(current_display)
+                ## Checks if picked spot is valid
+                if self.Game.pick_player_spot(chosen_cell, pieces[i]):
+                    middle_spot = self.get_selected_display(chosen_cell)
+                    added_player_index = self.Game.get_player_at_spot(chosen_cell)
+                    added_player = self.Game.get_player_at_index(added_player_index)
+                    current_display = added_player.get_display(middle_spot)
+                    self.player_displays.append(current_display)
 
-                        self.player_displays.__getitem__(i).draw(win)
-                        break
-                    else:
-                        continue
+                    self.player_displays.__getitem__(i).draw(win)
+                    break
                 else:
-                    if self.Game.pick_player_spot(chosen_cell, pieces[i]):
-                        middle_spot = self.get_selected_display(chosen_cell)
-                        added_player_index = self.Game.get_player_at_spot(chosen_cell)
-                        added_player = self.Game.get_player_at_index(added_player_index)
-                        current_display = added_player.get_display(middle_spot)
-                        self.player_displays.append(current_display)
+                    continue
 
-                        self.player_displays.__getitem__(i).draw(win)
-                        break
-                    else:
-                        continue
-
-    def ask_for_grid_point(self, win) -> Space | float:
+    def ask_for_grid_point(self, win) -> Space | list[int]:
         mouse = win.getMouse()
         return self.convert_display_on_grid(mouse.getX(), mouse.getY())
 
-    def convert_display_on_grid(self, _disX, _disY) -> Space:
+    def convert_display_on_grid(self, _disX, _disY) -> Space | list[int]:
         chosen_x = floor((_disX - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
         chosen_y = floor((_disY - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
 
-        current_board = self.Game.get_board()
         tempSpace = Space(chosen_x,chosen_y)
-        return current_board.get_chosen_grid_space(tempSpace)
+        return self.Game.get_grid_data(tempSpace)
 
     def convert_to_display(self, grid_spot):
         disX = grid_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing) + self.BOARD_PADDING
@@ -255,11 +252,7 @@ class GUI:
             num_players = floor(len(self.Game.get_order()) / 2)
             for i in range(num_players):
                 if not self.AI or (self.AI and i + 1 == 1):
-                    current_board = None
-                    if not self.IS_HASH:
-                        current_board = self.Game.get_board()
-                    else:
-                        current_board = self.Game.get_hashboard()
+                    current_board = self.Game.get_board()
                     while True:
                         self.set_message("Player " + str(i + 1) + ", pick a piece.")
                         chosen_point = self.ask_for_grid_point(self.get_window())

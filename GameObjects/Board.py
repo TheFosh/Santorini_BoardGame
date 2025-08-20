@@ -18,7 +18,7 @@ class Board:
 
     ########################################
     ########### GETTERS & SETTERS ##########
-    def get_width_height(self):
+    def get_dimensions(self):
         return self.WIDTH
 
     def get_chosen_grid_space(self, chosen_space: Space):

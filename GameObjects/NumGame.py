@@ -36,7 +36,7 @@ class NumGame:
         """
         return self.Board
 
-    def get_player_at_spot(self, spot: Space) -> int:
+    def get_player_at_spot(self, spot: list[int]) -> int:
         """
             Looks through the player list to find if there is a player at the given spot. If so, the index of that player is returned.
 
@@ -47,7 +47,7 @@ class NumGame:
         """
         for i in range(len(self.all_players)):
             player = self.all_players[i]
-            if spot.getX() == player.getX() and spot.getY() == player.getY():
+            if spot[0] == player.getX() and spot[1] == player.getY():
                 return i
 
         return -1
@@ -57,9 +57,12 @@ class NumGame:
         Returns: player object from 'all_players' from the given index.
         """
         return self.all_players[player_index]
+
+    def get_grid_data(self, spot: Space) -> list[int]:
+        return self.Board.get_chosen_grid_space([spot.getX(), spot.getY()])
     ########################################
 
-    def pick_player_spot(self, chosen_cell: Space, player_num: int) -> bool:
+    def pick_player_spot(self, chosen_cell: list[int], player_num: int) -> bool:
         """
         Given a Space in grid cords and a player label,
         it is checked if the spot chosen can be a valid starting spot for
@@ -70,9 +73,11 @@ class NumGame:
         If not, it will ONLY return false.
 
         """
-        if self.Board.valid_for_open_space(chosen_cell.getX(), chosen_cell.getY()):
-            self.Board.set_grid_player(chosen_cell.getX(), chosen_cell.getY(), player_num)
-            self.add_player(chosen_cell.getX(), chosen_cell.getY(), player_num)
+        x = chosen_cell[0]
+        y = chosen_cell[1]
+        if self.Board.valid_for_open_space(x, y):
+            self.Board.set_data(x, y, 0, player_num)
+            self.add_player(x, y, player_num)
             return True
         else:
             return False
@@ -99,7 +104,7 @@ class NumGame:
 
         current_player = self.all_players[player_index]
         possible_move_locations = []
-        possible_move_locations = self.Board.get_spaces_around(current_player.getX(), current_player.getY())
+        possible_move_locations = self.Board.get_spaces_around(current_player)
         possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
 
         return possible_move_locations
@@ -112,7 +117,7 @@ class NumGame:
         current_player = self.all_players[player_index]
         # 'Board' object updates it's location data on the given player.
 
-        self.Board.update_player_space(current_player.getX(), current_player.getY, current_player.get_player(), picked_location.getX(), picked_location.getY())
+        self.Board.update_player_space(current_player, picked_location)
 
         # Player in 'all_players' gets updated as well.
         self.all_players[player_index].set_cords(picked_location.getX(), picked_location.getY())
@@ -121,15 +126,13 @@ class NumGame:
         if current_player.get_level() == 3:
             self.game_state = False
 
-    def get_build_spots(self, player_index: int) -> list[Space]:
+    def get_build_spots(self, player_index: int) -> list[list[int]]:
         """
         Finds all spots around the indexed Player given for possible builds.
         """
         current_player = self.all_players[player_index]
         possible_move_locations = []
-        cx = current_player.getX()
-        cy = current_player.getY()
-        possible_move_locations = self.Board.get_spaces_around(cx, cy)
+        possible_move_locations = self.Board.get_spaces_around(current_player)
         return possible_move_locations
 
     def spot_in_list(self, picked:Space, options:list[Space]) -> bool:
@@ -145,9 +148,7 @@ class NumGame:
         """
         Records and updates the 'Board' object with building a block level on given Space.
         """
-        px = picked_location
-        py = picked_location
-        self.Board.build_on_space(px, py)
+        self.Board.build_on_space(picked_location)
 
     def AI_Turn(self, cpu: CPU) -> Turn:
         """

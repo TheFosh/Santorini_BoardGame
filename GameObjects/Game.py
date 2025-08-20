@@ -5,6 +5,7 @@
 from GameObjects.Board import Board
 from GameObjects.HashableBoard import Hashboard
 from GameObjects.Player import Player
+from GameObjects.Space import Space
 from GameObjects.Turn import Turn
 
 
@@ -61,6 +62,9 @@ class Game:
 
     def get_picked_player(self):
         return self.PICKED_PLAYER
+
+    def get_grid_data(self, spot: Space) -> Space:
+        return self.Board.get_chosen_grid_space(spot)
     ########################################
 
     def pick_player_spot(self, chosen_cell, player_num):
@@ -249,10 +253,17 @@ class Game:
             CPU.set_board(self.get_board())
         else:
             CPU.set_board(self.get_hashboard())
+
+        pieces: list[Space] = [self.get_player_at_index(0), self.get_player_at_index(3)]
+
+        CPU.update_all_pieces(pieces, 1)
         decided_turn = CPU.get_best_turn()
         p = decided_turn.get_piece()    # Player object chosen.
         m = decided_turn.get_move()     # Space to move to.
         b = decided_turn.get_build()    # Space to build on.
+        p: list[Space] = [self.get_player_at_index(1), self.get_player_at_index(2)]
+
+        CPU.update_all_pieces(pieces, 2)
 
         return decided_turn
 
