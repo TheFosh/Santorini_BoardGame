@@ -31,8 +31,6 @@ class CPU:
             for j in range(self.current_board.HEIGHT):
                 if self.current_board.grid[i][j].get_player() == player_num:
                     pieces.append(copy.deepcopy(self.current_board.grid[i][j]))
-        print(player_num)
-        print(pieces)
         return pieces
 
     def get_depth(self):
@@ -228,15 +226,15 @@ class CPU:
             #print(self.total_board_score())
             return self.total_board_score()
 
-        if self.did_opponent_won(p * 2 - 3):
+        if self.did_opponent_win(p * 2 - 3):
             return -1000000000
 
         for t in all_turns:
-
-            self.simulate_turn(copy.deepcopy(t))
-            negate_flip = 1
+            current_turn = copy.deepcopy(t)
+            self.simulate_turn(current_turn)
+            negate_flip = 1 #(p % 2 + 1)
             score = negate_flip * self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
-            self.undo_turn(copy.deepcopy(t))
+            self.undo_turn(current_turn)
 
             if score >= beta:
                 return beta
@@ -248,9 +246,13 @@ class CPU:
         """
         Method made to find the best turn a player can make on a turn.
         Args:
-            p: A number representing which player is currently playing. By default, it player 2.
+            p: A number representing which player is currently playing. By default, it player 1.
 
         Returns: A Turn object representing the best course of action the AI should make.
+        """
+
+        """
+            TODO: BOARD GRID IS NOT ACCURATE ON SIMULATIONS
         """
         self.p1_pieces = self.get_player_pieces(1)
         self.p2_pieces = self.get_player_pieces(2)
@@ -258,7 +260,7 @@ class CPU:
         for i in range(len(poss_turns)):
             current_turn = copy.deepcopy(poss_turns[i])
             self.simulate_turn(current_turn)
-            score = self.evaluate_board(self.get_depth(), p, -math.inf, math.inf)
+            score = self.evaluate_board(self.get_depth(), (p % 2 + 1), -math.inf, math.inf)
             poss_turns[i].set_evaluation(score)
             self.undo_turn(current_turn)
             poss_turns[i].set_id(i+1)
@@ -272,11 +274,9 @@ class CPU:
 
         #print(poss_turns)
         print(decided_turn)
-        print(self.p1_pieces)
-        print(self.p2_pieces)
         return decided_turn
 
-    def did_opponent_won(self, p: int) -> bool:
+    def did_opponent_win(self, p: int) -> bool:
         if p == 1:
             return self.p1_pieces[0].get_level() == 3 or self.p1_pieces[1].get_level() == 3
         else:

@@ -21,7 +21,7 @@ class GUI:
 
         self.IS_HASH = _is_hash
         self.AI = ai_on
-        self.game_ai = CPU(1, self.Game.get_board()) # NUMBER SHOULD BE ODD
+        self.game_ai = CPU(1, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width

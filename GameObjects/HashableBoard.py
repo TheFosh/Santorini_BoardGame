@@ -9,6 +9,10 @@ from GameObjects.Space import Space
 
 class Hashboard:
     def __init__(self, side_cell_count):
+        """ TODO: IMPLEMENT THE HASH BOARD!!! IT'S SO SLOW ON IT'S OWN.
+                    Hash board is not meant to be a separate way to play.
+                    It is a storage for board combinations.
+                    Make the board work for the notes below."""
         self.dimensions = side_cell_count
 
         #### BOARD MEANING ####
