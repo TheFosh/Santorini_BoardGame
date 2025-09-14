@@ -1,6 +1,7 @@
 ## Object representing the board of spaces in a game ##
 #######################################################
 ## Author: Jake Swanson
+import copy
 
 from GameObjects.Space import Space
 
@@ -25,7 +26,24 @@ class Board:
         """Given a Space, the corresponding Space data in the 'grid' is returned"""
         return self.grid[chosen_space.getX()][chosen_space.getY()]
 
-    def set_grid_player(self, chosen_space, player_num):
+    def get_all_blocks(self) -> list[Space]:
+        blocks = []
+        for r in self.grid:
+            for c in r:
+                if c.get_level() > 0:
+                    blocks.append(copy.deepcopy(c))
+
+        return blocks
+
+    def get_all_players(self) -> list[Space]:
+        players = []
+        for r in self.grid:
+            for c in r:
+                if c.get_player() > 0:
+                    players.append(copy.deepcopy(c))
+        return players
+
+    def set_grid_player(self, chosen_space: Space, player_num: int):
         """Sets the given Space in the 'grid' to be the given 'player_num'."""
         self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
     ########################################

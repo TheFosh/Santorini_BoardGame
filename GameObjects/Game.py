@@ -2,6 +2,9 @@
 ## of Santorini                                       ##
 ########################################################
 ## Author: Jake Swanson
+import copy
+
+from ArtificialPlayer import CPU
 from GameObjects.Board import Board
 from GameObjects.HashableBoard import Hashboard
 from GameObjects.Player import Player
@@ -15,6 +18,7 @@ class Game:
         self.HashBoard = Hashboard(_cell_num)   # HashBoard object. Used for optimized gameplay.
         self.IS_HASH = is_hash                  # Bool. Says if a hash is used or not.
         self.AI_ON = ai_on                      # Bool. Says if an AI is used or not.
+        self.game_ai = CPU(1, self.get_board())
         self.player_start_order = [1,2,2,1]     # Int Array. Gives the order in which players put their pieces on the board.
                                                     # ex: 1,2,2,1 means that p1 goes first, p2 does both next then p1 puts their last piece down.
         self.all_players = []                   # Player Array. Initialized empty. Stores all player object data.
@@ -65,7 +69,12 @@ class Game:
 
     def get_grid_data(self, spot: Space) -> Space:
         return self.Board.get_chosen_grid_space(spot)
+
+    def set_board(self, _board: Board) -> None:
+        self.Board = copy.deepcopy(_board)
+        
     ########################################
+
 
     def pick_player_spot(self, chosen_cell, player_num):
         """
@@ -244,42 +253,43 @@ class Game:
             self.PLAYER_TURN = self.PLAYER_TURN % 2 + 1  ## Flip turn order
         return valid_spot
 
-    def AI_Turn(self, CPU):
+    def AI_Turn(self):
         """
         Given a CPU(AI), the game is simulated to have a turn taken as if someone decided
         a turn for the game.
         """
         if not self.IS_HASH:
-            CPU.set_board(self.get_board())
+            self.game_ai.set_board(self.get_board())
         else:
-            CPU.set_board(self.get_hashboard())
+            self.game_ai.set_board(self.get_hashboard())
 
         pieces: list[Space] = [self.get_player_at_index(0), self.get_player_at_index(3)]
 
-        CPU.update_all_pieces(pieces, 1)
-        decided_turn = CPU.get_best_turn()
+        self.game_ai.update_all_pieces(pieces, 1)
+        decided_turn = self.game_ai.get_best_turn(self)
         p = decided_turn.get_piece()    # Player object chosen.
         m = decided_turn.get_move()     # Space to move to.
         b = decided_turn.get_build()    # Space to build on.
         p: list[Space] = [self.get_player_at_index(1), self.get_player_at_index(2)]
 
-        CPU.update_all_pieces(pieces, 2)
+        self.game_ai.update_all_pieces(pieces, 2)
 
         return decided_turn
 
+    def simulate_turn(self, given_turn: Turn):
+        """
+        Given a Turn object, a new board is generated as if the
+        given turn was followed through on.
 
-    # NOT SURE IF THIS IS NEEDED.
-    # def simulate_turn(self, given_turn):
-    #     """
-    #     Given a Turn object, a new board is generated as if the
-    #     given turn was followed through on.
-    #
-    #     Args:
-    #         given_turn: A Turn object. Assumed to be a valid turn.
-    #
-    #     Returns: Board object.
-    #     """
-    #
-    #     # sim_board = self.get_board()
-    #     # p = given_turn.get_piece()
-    #     # sim_board.se
+        Args:
+            given_turn: A Turn object. Assumed to be a valid turn.
+
+        Returns: None
+        """
+        p = given_turn.get_piece()
+        m = given_turn.get_move()
+        b = given_turn.get_build()
+        self.Board.set_grid_player(m, p.get_player())
+        self.Board.set_grid_player(p, 0)
+        self.Board.build_on_space(b)
+

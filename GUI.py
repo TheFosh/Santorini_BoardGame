@@ -4,12 +4,13 @@
 import copy
 from math import floor
 
-from ArtificialPlayer import CPU
+from GameObjects.Board import Board
 from GameObjects.Game import Game
 from graphics import *
 
 from GameObjects.NumGame import NumGame
 from GameObjects.Space import Space
+from GameObjects.Turn import Turn
 
 
 class GUI:
@@ -21,7 +22,6 @@ class GUI:
 
         self.IS_HASH = _is_hash
         self.AI = ai_on
-        self.game_ai = CPU(1, self.Game.get_board())
 
         self.screen_height = _height
         self.screen_width = _width
@@ -72,6 +72,12 @@ class GUI:
 
     def get_board(self):
         return self.Game.get_board()
+
+    def set_board(self, given_board: Board):
+        self.Game.set_board(given_board)
+
+    def set_game(self, given_game_state: Game) -> None:
+        self.Game = copy.deepcopy(given_game_state)
 
 ########################################
 
@@ -176,16 +182,18 @@ class GUI:
                 chosen_cell = self.ask_for_grid_point(win)
                 ## Checks if picked spot is valid
                 if self.Game.pick_player_spot(chosen_cell, pieces[i]):
-                    middle_spot = self.get_selected_display(chosen_cell)
-                    added_player_index = self.Game.get_player_at_spot(chosen_cell)
-                    added_player = self.Game.get_player_at_index(added_player_index)
-                    current_display = added_player.get_display(middle_spot)
-                    self.player_displays.append(current_display)
+                    self.setup_player(chosen_cell)
 
                     self.player_displays.__getitem__(i).draw(win)
                     break
                 else:
                     continue
+    def setup_player(self, chosen_cell: Space):
+        middle_spot = self.get_selected_display(chosen_cell)
+        added_player_index = self.Game.get_player_at_spot(chosen_cell)
+        added_player = self.Game.get_player_at_index(added_player_index)
+        current_display = added_player.get_display(middle_spot)
+        self.player_displays.append(current_display)
 
     def ask_for_grid_point(self, win) -> Space | list[int]:
         mouse = win.getMouse()
@@ -233,6 +241,11 @@ class GUI:
 
     def set_message(self, message):
         self.instruction_display.setText(message)
+
+    def display_turn(self, _t: Turn) -> None:
+        player_index = self.Game.get_player_at_spot(_t.get_piece())
+        self.update_player_display(player_index, _t.get_move())
+        self.update_block_display(_t.get_build())
 
     def start_game(self):
         """
@@ -282,7 +295,7 @@ class GUI:
 
                     if self.AI:
                         num_count += 1
-                        turn = self.Game.AI_Turn(self.game_ai)
+                        turn = self.Game.AI_Turn()
                         p_ind = self.Game.get_player_at_spot(turn.get_piece())
                         m_sp = turn.get_move()
                         self.Game.move_player(p_ind, m_sp)
@@ -406,7 +419,24 @@ class GUI:
         return True
 ############
 
-    def update_ai(self):
-        board_copy = copy.deepcopy(self.Game.get_board())
+    def display_artificial_game(self, given_board: Board) -> None:
+        self.set_board(given_board)
+        self.setup()
+        self.update_board_display(given_board)
+        win = self.get_window()
+        win.getMouse()
 
-        print(self.game_ai.evaluate_board_step(board_copy))
+    def update_board_display(self, given_board: Board):
+        board = copy.deepcopy(given_board)
+        players = board.get_all_players()
+        self.display_new_players(players)
+        blocks = board.get_all_blocks()
+        self.display_new_blocks(blocks)
+
+    def display_new_players(self, players: list[Space]) -> None:
+        for p in players:
+            self.setup_player(p)
+
+    def display_new_blocks(self, blocks: list[Space]) -> None:
+        for b in blocks:
+            self.update_block_display(b)

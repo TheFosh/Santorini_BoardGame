@@ -7,7 +7,6 @@ import time
 
 from graphics import GraphWin
 
-from ArtificialPlayer import CPU
 from GUI import GUI
 from GameObjects.Space import Space
 

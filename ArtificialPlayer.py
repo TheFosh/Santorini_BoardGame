@@ -6,6 +6,7 @@ import math
 
 import numpy as np
 
+from BoardDisplay import BoardDisplay
 from GameObjects.Board import Board
 from GameObjects.HashableBoard import Hashboard
 from GameObjects.Space import Space
@@ -24,6 +25,7 @@ class CPU:
         self.hashArray = []
         self.p1_pieces = []
         self.p2_pieces = []
+        self.display = BoardDisplay(500,500, 50, 5)
 
     def get_player_pieces(self, player_num):
         pieces = []
@@ -226,7 +228,7 @@ class CPU:
             #print(self.total_board_score())
             return self.total_board_score()
 
-        if self.did_opponent_win(p * 2 - 3):
+        if self.did_opponent_win(p % 2 +1):
             return -1000000000
 
         for t in all_turns:
@@ -242,10 +244,11 @@ class CPU:
             alpha = max(score, alpha)
         return alpha
 
-    def get_best_turn(self, p=2):
+    def get_best_turn(self, game_info, p=2):
         """
         Method made to find the best turn a player can make on a turn.
         Args:
+            game_info: Game object with information about the game.
             p: A number representing which player is currently playing. By default, it player 1.
 
         Returns: A Turn object representing the best course of action the AI should make.
@@ -259,6 +262,7 @@ class CPU:
         poss_turns = copy.deepcopy(self.search_moves(p))
         for i in range(len(poss_turns)):
             current_turn = copy.deepcopy(poss_turns[i])
+            self.display.display_artificial_game(current_turn, copy.deepcopy(game_info))
             self.simulate_turn(current_turn)
             score = self.evaluate_board(self.get_depth(), (p % 2 + 1), -math.inf, math.inf)
             poss_turns[i].set_evaluation(score)
