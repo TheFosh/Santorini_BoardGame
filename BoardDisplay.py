@@ -4,6 +4,7 @@ from math import floor
 from GameObjects.Board import Board
 from graphics import *
 
+from GameObjects.Player import Player
 from GameObjects.Space import Space
 from GameObjects.Turn import Turn
 
@@ -11,25 +12,23 @@ from GameObjects.Turn import Turn
 class BoardDisplay:
         def __init__(self, _height, _width, _off, _cell_num, ai_on=False, _is_hash=False):
 
-            self.IS_HASH = _is_hash
-            self.AI = ai_on
+            self.IS_HASH: bool = _is_hash
+            self.AI: bool = ai_on
 
-            self.screen_height = _height
-            self.screen_width = _width
-            self.screen_offset = _off
-            self.window = None
+            self.screen_height: int = _height
+            self.screen_width: int = _width
+            self.screen_offset: int = _off
+            self.window: GraphWin | None = None
 
-            self.COLUMN_WIDTH = 10
-            self.BOARD_PADDING = 30
-            self.board_dimensions = _width - 2 * self.BOARD_PADDING
-            self.column_spacing = (self.board_dimensions - ((_cell_num + 1) * self.COLUMN_WIDTH)) / _cell_num
+            self.COLUMN_WIDTH: int = 10
+            self.BOARD_PADDING: int = 30
+            self.board_dimensions: int = _width - 2 * self.BOARD_PADDING
+            self.column_spacing: int = (self.board_dimensions - ((_cell_num + 1) * self.COLUMN_WIDTH)) / _cell_num
 
-            text_point = Point(self.screen_width / 2, self.screen_height + self.BOARD_PADDING / 2)
-            self.instruction_display = Text(text_point, "")
-            self.player_displays = []
-            self.block_displays = []
-
-            self.evaluation_displays = []
+            text_point: Point = Point(self.screen_width / 2, self.screen_height + self.BOARD_PADDING / 2)
+            self.instruction_display: Text = Text(text_point, "")
+            self.player_displays: list[Circle] = []
+            self.block_displays: list[Rectangle] = []
 
         ########################################
         ########### GETTERS & SETTERS ##########
@@ -47,25 +46,18 @@ class BoardDisplay:
             Converts given grid coordinates into display coordinates.
             Display coordinates should be centered in the chosen cell.
             """
-            display_x_cord = 0
-            display_y_cord = 0
-            if not self.IS_HASH:
-                display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot.getX() * (
-                        self.COLUMN_WIDTH + self.column_spacing)
-                display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot.getY() * (
-                        self.COLUMN_WIDTH + self.column_spacing)
-            else:
-                display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot[0] * (
-                        self.COLUMN_WIDTH + self.column_spacing)
-                display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot[1] * (
-                        self.COLUMN_WIDTH + self.column_spacing)
+            display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot.getX() * (
+                    self.COLUMN_WIDTH + self.column_spacing)
+            display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot.getY() * (
+                    self.COLUMN_WIDTH + self.column_spacing)
 
             return Space(display_x_cord, display_y_cord)
 
         ########################################
 
         def setup(self, current_board: Board):
-            win = self.window
+            self.window = GraphWin("Santorini", self.screen_width + self.screen_offset, self.screen_height)
+            win = self.get_window()
             # Background set to a nice blue
             win.setBackground(color_rgb(108, 158, 240))
 
@@ -167,71 +159,11 @@ class BoardDisplay:
                     ## Checks if picked spot is valid
                     if game_info.pick_player_spot(chosen_cell, pieces[i]):
                         self.setup_player(chosen_cell, game_info)
-
+                        print(self.player_displays)
                         self.player_displays.__getitem__(i).draw(win)
                         break
                     else:
                         continue
-
-        def setup_player(self, chosen_cell: Space, game_info):
-            middle_spot = self.get_selected_display(chosen_cell)
-            added_player_index = game_info.get_player_at_spot(chosen_cell)
-            added_player = game_info.get_player_at_index(added_player_index)
-            current_display = added_player.get_display(middle_spot)
-            win = self.get_window()
-            current_display.draw(win)
-
-        def ask_for_grid_point(self, win) -> Space | list[int]:
-            mouse = win.getMouse()
-            return self.convert_display_on_grid(mouse.getX(), mouse.getY())
-
-        def convert_display_on_grid(self, _disX, _disY) -> Space:
-            chosen_x = floor((_disX - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
-            chosen_y = floor((_disY - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
-
-            tempSpace = Space(chosen_x, chosen_y)
-            return tempSpace
-
-        def convert_to_display(self, grid_spot):
-            disX = grid_spot.getX() * (self.COLUMN_WIDTH + self.column_spacing) + self.BOARD_PADDING
-            disY = grid_spot.getY() * (self.COLUMN_WIDTH + self.column_spacing) + self.BOARD_PADDING
-
-            return Point(disX, disY)
-
-        def convert_display_to_grid(self, _disX, _disY):
-            chosen_x = floor((_disX - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
-            chosen_y = floor((_disY - self.BOARD_PADDING) / (self.COLUMN_WIDTH + self.column_spacing))
-
-            return Space(chosen_x, chosen_y)
-
-        def update_player_display(self, player_index, picked_location):
-            player_display = self.player_displays[player_index].getCenter()
-            old_display_x = player_display.getX()
-            old_display_y = player_display.getY()
-            new_display_x = self.get_selected_display(picked_location).getX()
-            new_display_y = self.get_selected_display(picked_location).getY()
-            self.player_displays[player_index].move(new_display_x - old_display_x, new_display_y - old_display_y)
-
-        def update_block_display(self, picked_location, current_board: Board):
-            selected_space = current_board.grid[picked_location.getX()][picked_location.getY()]
-            block_index = picked_location.getY() * 5 + picked_location.getX()
-            spot_level = selected_space.get_level()
-            if spot_level == 0:
-                self.block_displays[block_index].undraw()
-            elif 0 < spot_level < 4:
-                block_color = int(255 / (4 - spot_level))
-                self.block_displays[block_index].setFill(color_rgb(block_color, block_color, block_color))
-            else:
-                self.block_displays[block_index].setFill(color="blue")
-
-        def set_message(self, message):
-            self.instruction_display.setText(message)
-
-        def display_turn(self, _t: Turn, game_info) -> None:
-            player_index = game_info.get_player_at_spot(_t.get_piece())
-            self.update_player_display(player_index, _t.get_move())
-            current_board = game_info.get_board()
-            self.update_block_display(_t.get_build(), current_board)
 
         def start_game(self, game_info):
             """
@@ -300,69 +232,16 @@ class BoardDisplay:
 
             print("game over")
 
-        def next_turn(self, _dis_x, _dis_y, game_info ,ai_on=False):
-            """
-            The next step in the game will happen given the inputted spot.
-            Depends on the boolean fields for determining the turn order.
-            :param _dis_x, _dis_y: Display coordinates that is the user selection.
-            :return: Boolean. False for game over. True for continue.
-            """
-            if ai_on:
-                print("Test")
-                return
-
-            spot = self.convert_display_to_grid(_dis_x, _dis_y)
-
-            PICKED_PLAYER = game_info.get_picked_player()
-            PLAYER_TURN = game_info.get_player_turn()
-            MOVE = game_info.get_move()
-            BUILD = game_info.get_build()
-
-            current_board = game_info.get_board()
-            valid_select = current_board.space_on_board(spot.getX(), spot.getY())
-
-            if not valid_select:
-                return True
-
-            spot = self.convert_display_on_grid(_dis_x, _dis_y)
-
-            if not MOVE and not BUILD:
-                ### Player piece select
-                if game_info.pick_piece_turn(spot):
-                    self.set_message("Move selected piece.")
-
-            elif MOVE:
-                ### Movement select
-                if game_info.move_piece_turn(spot):
-                    game_info.move_player(PICKED_PLAYER, spot)
-                    self.update_player_display(PICKED_PLAYER, spot)
-                    self.set_message("Build around selected piece.")
-                # self.window.update()
-
-
-            elif not game_info.game_state:
-                self.set_message("Game over")
-                return False
-
-            elif BUILD:
-                ### Build select
-                if game_info.build_piece_turn(spot):
-                    game_info.build_at_spot(spot)
-                    self.update_block_display(spot, game_info.get_board())
-                    self.set_message("Player " + str(3 - PLAYER_TURN) + ", pick a piece.")
-
-            return True
-
         ############
 
-        def display_artificial_game(self, new_turn, given_game) -> None:
-            given_game.simulate_turn(new_turn)
-            self.window = GraphWin("Santorini", self.screen_width + self.screen_offset, self.screen_height + self.screen_offset)
-            self.setup(copy.deepcopy(given_game.get_board()))
-            self.update_board_display(given_game)
-            win = self.get_window()
-            win.getMouse()
-            self.window.close()
+        # def display_artificial_game(self, new_turn, given_game) -> None:
+        #     given_game.simulate_turn(new_turn)
+        #     self.window = GraphWin("Santorini", self.screen_width + self.screen_offset, self.screen_height + self.screen_offset)
+        #     self.setup(copy.deepcopy(given_game.get_board()))
+        #     self.update_board_display(given_game)
+        #     win = self.get_window()
+        #     win.getMouse()
+        #     self.window.close()
 
         def update_board_display(self, given_game):
             board = copy.deepcopy(given_game.get_board())

@@ -75,6 +75,8 @@ class Game:
         
     ########################################
 
+    def start_game(self) -> None:
+        l
 
     def pick_player_spot(self, chosen_cell, player_num):
         """

@@ -21,13 +21,7 @@ IS_AI = True
 GAME_GUI = GUI(SCREEN_HEIGHT, SCREEN_WIDTH, WIDTH_OFFSET, BOARD_CELL_COUNT, ai_on=IS_AI, _is_hash= IS_HASH)
 
 def main():
-    GAME_GUI.setup()
-    GAME_GUI.setup_game(is_hash=IS_HASH)
-
-    win = GAME_GUI.get_window()
-
     GAME_GUI.start_game()
-
 
 
     # while True:

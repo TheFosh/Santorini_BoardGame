@@ -228,7 +228,7 @@ class CPU:
             #print(self.total_board_score())
             return self.total_board_score()
 
-        if self.did_opponent_win(p % 2 +1):
+        if self.did_opponent_win(3-p):
             return -1000000000
 
         for t in all_turns:
