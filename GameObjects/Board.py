@@ -3,6 +3,7 @@
 ## Author: Jake Swanson
 import copy
 
+from GameObjects.Player import Player
 from GameObjects.Space import Space
 
 class Board:
@@ -35,12 +36,13 @@ class Board:
 
         return blocks
 
-    def get_all_players(self) -> list[Space]:
+    def get_all_players(self) -> list[Player]:
         players = []
         for r in self.grid:
             for c in r:
                 if c.get_player() > 0:
-                    players.append(copy.deepcopy(c))
+                    p = Player(c.getX(), c.getY(), c.get_player())
+                    players.append(copy.deepcopy(p))
         return players
 
     def set_grid_player(self, chosen_space: Space, player_num: int):

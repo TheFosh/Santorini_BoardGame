@@ -43,7 +43,50 @@ class GUI:
     def ask_for_grid_point(self) -> Space | list[int]:
         win = self.display.get_window()
         mouse = win.getMouse()
-        return self.display.convert_display_on_grid(mouse.getX(), mouse.getY())
+        return self.convert_display_on_grid(mouse.getX(), mouse.getY())
+
+    def convert_display_on_grid(self, _disX, _disY) -> Space:
+
+        pad, col_wit, col_spa, _ = self.display.get_board_display_dimensions()
+
+        chosen_x = floor((_disX - pad) / (col_wit + col_spa))
+        chosen_y = floor((_disY - pad) / (col_wit + col_spa))
+
+        board = self.get_board()
+        chosen_space = board.get_chosen_grid_space(Space(chosen_x, chosen_y))
+
+        return chosen_space
+
+    def setup_player(self, chosen_cell: Space):
+        middle_spot = self.display.get_selected_display(chosen_cell)
+        added_player_index = self.Game.get_player_at_spot(chosen_cell)
+        added_player = self.Game.get_player_at_index(added_player_index)
+        current_display = added_player.get_display(middle_spot)
+        self.display.add_player_display(current_display)
+
+    def setup_game(self, is_hash=False):
+        """
+        Will ask the player to select where on the screen, they would
+        like their player piece to be. It will do this for all pieces,
+        according to the order of determined by the game object.
+        """
+        win = self.get_window()
+
+        pieces = self.Game.get_order()
+        for i in range(len(pieces)):
+            message = "Player " + str(pieces[i]) + ", select position for piece: "
+            self.display.set_display_message(message)
+            ## Loops until all characters are validly placed
+            while True:
+                chosen_cell = self.ask_for_grid_point()
+                ## Checks if picked spot is valid
+                if self.Game.pick_player_spot(chosen_cell, pieces[i]):
+                    self.setup_player(chosen_cell)
+                    player_displays = self.display.get_player_displays()
+                    player_displays.__getitem__(i).draw(win)
+                    break
+                else:
+                    continue
 
     def start_game(self):
         """
@@ -59,7 +102,7 @@ class GUI:
         current_board = self.Game.get_board()
 
         self.display.setup(current_board)
-        self.display.setup_game(self.Game)
+        self.setup_game()
 
         num_count = 1
         while True:
@@ -69,7 +112,7 @@ class GUI:
             for i in range(num_players):
                 if not self.AI or (self.AI and i + 1 == 1):
                     while True:
-                        self.display.set_message("Player " + str(i + 1) + ", pick a piece.")
+                        self.display.set_display_message("Player " + str(i + 1) + ", pick a piece.")
                         chosen_point = self.ask_for_grid_point()
                         if current_board.valid_player_select(chosen_point, i + 1):
                             ## Successfully chosen a player
@@ -79,7 +122,7 @@ class GUI:
 
                     move_options = self.Game.get_move_spots(picked_player)
                     while True:
-                        self.display.set_message("Move selected piece.")
+                        self.display.set_display_message("Move selected piece.")
                         picked_location = self.ask_for_grid_point()
                         if self.Game.spot_in_list(picked_location, move_options):
                             self.Game.move_player(picked_player, picked_location)
@@ -88,7 +131,7 @@ class GUI:
 
                     build_options = self.Game.get_build_spots(picked_player)
                     while True:
-                        self.display.set_message("Build around selected piece.")
+                        self.display.set_display_message("Build around selected piece.")
                         picked_location = self.ask_for_grid_point()
                         if self.Game.spot_in_list(picked_location, build_options):
                             self.Game.build_at_spot(picked_location)

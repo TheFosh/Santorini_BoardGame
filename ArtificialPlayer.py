@@ -3,6 +3,7 @@
 ## Author: Jake Swanson
 import copy
 import math
+from copy import deepcopy
 
 import numpy as np
 
@@ -21,8 +22,9 @@ class CPU:
         self.PLAYER_NUM_COUNT = 1
         self.BUILD_NUM_COUNT = 1
         self.SPACES_COUNT = 25
-        self.BITS = (self.PLAYER_NUM_COUNT + self.BUILD_NUM_COUNT) * self.SPACES_COUNT
-        self.hashArray = []
+
+        self.game_states = []
+
         self.p1_pieces = []
         self.p2_pieces = []
         self.display = BoardDisplay(500,500, 50, 5)
@@ -41,32 +43,6 @@ class CPU:
     def get_board(self):
         return self.current_board
 
-    def get_dec_equivalence(self):
-        board = self.get_board()
-        binary_state = ""
-        for row in board.grid:
-            for spot in row:
-                pn = spot.get_player()
-                player_dec = str(pn)
-                bn = spot.get_level()
-                build_dec = str(bn)
-                binary_state += player_dec + build_dec
-
-        return binary_state
-
-    def get_hash_eval(self, hash_ind):
-        all_data = self.get_hash_at_loc(hash_ind)
-        current_eval = int(all_data[self.BITS:])
-        return current_eval
-
-    def get_hash_at_loc(self, hash_ind):
-        for i in range(len(self.hashArray)):
-            hash_data = self.hashArray[i]
-            cur_hash_ind = hash_data[:self.BITS]
-            if cur_hash_ind.__eq__(hash_ind):
-                return hash_data
-        return "0" * self.BITS + "-1"
-
     # Setter for setting the board the AI sees.
     def set_board(self, given_board: (Board | Hashboard)):
         self.current_board = copy.deepcopy(given_board)
@@ -75,7 +51,6 @@ class CPU:
         """
         :return: All possible turns for the pieces of the relevant player
         """
-        pieces = []
         if relevant_player_num == 1:
             pieces = self.p1_pieces
         else:
@@ -83,13 +58,13 @@ class CPU:
         all_turns = []
 
         for p in pieces:
-            if p.get_level() < 3:
+            if p.get_level() < 4:
                 all_moves = self.current_board.get_spaces_around(p)
                 possible_moves = self.current_board.move_filter(all_moves, p)
                 for m in possible_moves:
                     possible_builds = self.current_board.get_spaces_around(m)
                     for b in possible_builds:
-                        all_turns.append(Turn(p, m, b))
+                        all_turns.append(Turn(deepcopy(p), deepcopy(m), deepcopy(b)))
             else:
                 return []
 
@@ -103,12 +78,12 @@ class CPU:
 
         p1_pieces = self.p1_pieces
         p2_pieces = self.p2_pieces
-        player_one_score = (self.winning_score(p1_pieces) + self.climbing_score(p1_pieces))
-                            #self.near_blocks_score(p1_pieces) +
-                            #self.climbing_score(p1_pieces))
-        player_two_score = (self.winning_score(p2_pieces) + self.climbing_score(p2_pieces))
-                            #self.near_blocks_score(p2_pieces) +
-                            #self.climbing_score(p2_pieces))
+        player_one_score = (self.winning_score(p1_pieces) + self.climbing_score(p1_pieces) +
+                            self.near_blocks_score(p1_pieces) +
+                            self.climbing_score(p1_pieces))
+        player_two_score = (self.winning_score(p2_pieces) + self.climbing_score(p2_pieces) +
+                            self.near_blocks_score(p2_pieces) +
+                            self.climbing_score(p2_pieces))
         # print("P2 "+ str(player_two_score))
         # print("P1 "+ str(player_one_score))
         return player_two_score - player_one_score
@@ -118,19 +93,20 @@ class CPU:
 
         for p in pieces:
             all_moves = self.current_board.get_spaces_around(p)
+
             climbable_moves = 0
             for m in all_moves:
-                if m.get_level() + 1 == p.get_level():
+                if m.get_level() == p.get_level() +1:
                     climbable_moves += 1
 
-            score += 10 * climbable_moves ** 2
+            score += 10 * climbable_moves
 
         return score
 
     def climbing_score(self, pieces):
         total_score = 0
         for p in pieces:
-            total_score += p.get_level() * 50
+            total_score += pow(100, p.get_level())
 
         return total_score
 
@@ -156,33 +132,34 @@ class CPU:
         self.current_board.set_grid_player(p, 0)
         self.current_board.set_grid_player(m, p_num)
         self.current_board.build_on_space(b)
-        self.update_piece(p, m)
+        self.update_piece(p, p_num, m)
         # print(self.p1_pieces)
         # print(self.p2_pieces)
 
     def undo_turn(self, turn):
-        p_num = turn.get_move().get_player()
         p = copy.deepcopy(turn.get_piece())
         m = copy.deepcopy(turn.get_move())
         b = copy.deepcopy(turn.get_build())
-        self.current_board.set_grid_player(p, p_num)
+        p_num = p.get_player()
         self.current_board.set_grid_player(m, 0)
+        self.current_board.set_grid_player(p, p_num)
         self.current_board.undo_build_on_space(b)
-        self.update_piece(m, p)
+        self.update_piece(m, p_num, p)
 
-    def update_piece(self, _p: Space, _m: Space):
+    def update_piece(self, _p: Space, _pnum: int, _m: Space):
         # print(_p)
-        p_num = _p.get_player()
-        if p_num == 1:
+        if _pnum == 1:
             for i in range(len(self.p1_pieces)):
                 if _p.getX() == self.p1_pieces[i].getX() and _p.getY() == self.p1_pieces[i].getY():
                     self.p1_pieces[i].set_cords(_m.getX(), _m.getY())
                     self.p1_pieces[i].set_height(_m.get_level())
+                    break
         else:
             for i in range(len(self.p2_pieces)):
                 if _p.getX() == self.p2_pieces[i].getX() and _p.getY() == self.p2_pieces[i].getY():
                     self.p2_pieces[i].set_cords(_m.getX(), _m.getY())
                     self.p2_pieces[i].set_height(_m.get_level())
+                    break
 
     def update_all_pieces(self, p: list[Space], p_num):
         if p_num == 1:
@@ -194,20 +171,9 @@ class CPU:
         if not self.current_board.same_board(given_board):
             self.current_board = copy.deepcopy(given_board)
             self.current_board = copy.deepcopy(given_board)
-            self.predicting_board = copy.deepcopy(given_board)
             self.insight_count = 0
 
         return given_board != self.current_board
-
-    def evaluate_board_step(self, given_board):
-        """
-        Every call looks 1 step further into possible moves
-        from where it left off.
-        """
-        self.check_new_board(given_board)
-        player_one_score = self.evaluate_board(self.Depth, 1, self.alpha, self.beta)
-        self.current_board = copy.deepcopy(self.predicting_board)
-        return player_one_score
 
     def evaluate_board(self, d, p, alpha, beta):
         """
@@ -228,27 +194,33 @@ class CPU:
             #print(self.total_board_score())
             return self.total_board_score()
 
-        if self.did_opponent_win(3-p):
-            return -1000000000
+        if self.did_win(p):
+            return 1000000000
 
-        for t in all_turns:
-            current_turn = copy.deepcopy(t)
+        # best_turn = 0
+        for i in range(len(all_turns)):
+            current_turn = deepcopy(all_turns[i])
             self.simulate_turn(current_turn)
-            negate_flip = 1 #(p % 2 + 1)
+            # board = copy.deepcopy(self.get_board())
+            # self.display.display_artificial_game(board)
+            negate_flip = 1 #pow(-1,p)
             score = negate_flip * self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
+            # print(score)
             self.undo_turn(current_turn)
 
             if score >= beta:
                 return beta
 
+            # if score > alpha:
+            #     best_turn = i
             alpha = max(score, alpha)
+        # print(f"Decided on: {all_turns[best_turn]} with a score of {alpha}")
         return alpha
 
-    def get_best_turn(self, game_info, p=2):
+    def get_best_turn(self, p=2):
         """
         Method made to find the best turn a player can make on a turn.
         Args:
-            game_info: Game object with information about the game.
             p: A number representing which player is currently playing. By default, it player 1.
 
         Returns: A Turn object representing the best course of action the AI should make.
@@ -259,16 +231,18 @@ class CPU:
         """
         self.p1_pieces = self.get_player_pieces(1)
         self.p2_pieces = self.get_player_pieces(2)
-        poss_turns = copy.deepcopy(self.search_moves(p))
+        poss_turns = self.search_moves(p)
+        turn_count =len(poss_turns)
         for i in range(len(poss_turns)):
             current_turn = copy.deepcopy(poss_turns[i])
-            self.display.display_artificial_game(current_turn, copy.deepcopy(game_info))
             self.simulate_turn(current_turn)
-            score = self.evaluate_board(self.get_depth(), (p % 2 + 1), -math.inf, math.inf)
+            # board = self.get_board()
+            # self.display.display_artificial_game(board)
+            score = self.evaluate_board(self.get_depth(), (3-p), -math.inf, math.inf)
             poss_turns[i].set_evaluation(score)
             self.undo_turn(current_turn)
             poss_turns[i].set_id(i+1)
-            #print(str((i+1)/turn_count) + "%")
+            print(str((i+1)/turn_count) + "%")
 
         decided_turn = Turn()
 
@@ -280,7 +254,7 @@ class CPU:
         print(decided_turn)
         return decided_turn
 
-    def did_opponent_win(self, p: int) -> bool:
+    def did_win(self, p: int) -> bool:
         if p == 1:
             return self.p1_pieces[0].get_level() == 3 or self.p1_pieces[1].get_level() == 3
         else:

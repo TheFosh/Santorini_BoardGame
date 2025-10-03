@@ -3,6 +3,7 @@
 ########################################################
 ## Author: Jake Swanson
 import copy
+from copy import deepcopy
 
 from ArtificialPlayer import CPU
 from GameObjects.Board import Board
@@ -18,7 +19,7 @@ class Game:
         self.HashBoard = Hashboard(_cell_num)   # HashBoard object. Used for optimized gameplay.
         self.IS_HASH = is_hash                  # Bool. Says if a hash is used or not.
         self.AI_ON = ai_on                      # Bool. Says if an AI is used or not.
-        self.game_ai = CPU(1, self.get_board())
+        self.game_ai = CPU(3, self.get_board())
         self.player_start_order = [1,2,2,1]     # Int Array. Gives the order in which players put their pieces on the board.
                                                     # ex: 1,2,2,1 means that p1 goes first, p2 does both next then p1 puts their last piece down.
         self.all_players = []                   # Player Array. Initialized empty. Stores all player object data.
@@ -75,9 +76,6 @@ class Game:
         
     ########################################
 
-    def start_game(self) -> None:
-        l
-
     def pick_player_spot(self, chosen_cell, player_num):
         """
         Given a Space in grid cords and a player label,
@@ -126,13 +124,8 @@ class Game:
         """
 
         current_player = self.all_players[player_index]
-        possible_move_locations = []
-        if not self.IS_HASH:
-            possible_move_locations = self.Board.get_spaces_around(current_player)
-            possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
-        else:
-            possible_move_locations = self.HashBoard.get_spaces_around(current_player.getX(), current_player.getY())
-            possible_move_locations = self.HashBoard.move_filter(possible_move_locations, current_player)
+        possible_move_locations = self.Board.get_spaces_around(current_player)
+        possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
 
         return possible_move_locations
 
@@ -143,15 +136,7 @@ class Game:
         """
         current_player = self.all_players[player_index]
         # 'Board' object updates it's location data on the given player.
-        if not self.IS_HASH:
-            self.Board.update_player_space(current_player, picked_location)
-        else:
-            c_x = current_player.getX()
-            c_y = current_player.getY()
-            c_n = current_player.get_player()
-            n_x = picked_location.getX()
-            n_y = picked_location.getY()
-            self.HashBoard.update_player_space(c_x,c_y,c_n,n_x,n_y)
+        self.Board.update_player_space(current_player, picked_location)
         # Player in 'all_players' gets updated as well.
         self.all_players[player_index].set_cords(picked_location.getX(), picked_location.getY())
         self.all_players[player_index].set_level(picked_location.get_level())
@@ -268,7 +253,8 @@ class Game:
         pieces: list[Space] = [self.get_player_at_index(0), self.get_player_at_index(3)]
 
         self.game_ai.update_all_pieces(pieces, 1)
-        decided_turn = self.game_ai.get_best_turn(self)
+
+        decided_turn = self.game_ai.get_best_turn()
         p = decided_turn.get_piece()    # Player object chosen.
         m = decided_turn.get_move()     # Space to move to.
         b = decided_turn.get_build()    # Space to build on.
