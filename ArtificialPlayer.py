@@ -54,7 +54,7 @@ class CPU:
         return int(index)
 
     def get_board_state(self, ind) -> int:
-        return int(self.game_states[ind % self.hash_value])
+        return self.game_states[ind % self.hash_value]
 
     # Setter for setting the board the AI sees.
     def set_board(self, given_board: (Board | Hashboard)):
@@ -93,25 +93,15 @@ class CPU:
 
         p1_pieces = self.p1_pieces
         p2_pieces = self.p2_pieces
-        player_one_score = (self.winning_score(p1_pieces) + self.prevent_win_score(p2_pieces) +
-                            self.climbing_score(p1_pieces))
-        player_two_score = (self.winning_score(p2_pieces) + self.prevent_win_score(p1_pieces) +
-                            self.climbing_score(p2_pieces))
+        player_one_score = (self.winning_score(p1_pieces) + self.near_blocks_score(p1_pieces) +
+                            self.climbing_score(p1_pieces) + self.depleting_moves_score(p2_pieces) +
+                            self.pieces_proximaty(p1_pieces))
+        player_two_score = (self.winning_score(p2_pieces) + self.near_blocks_score(p2_pieces) +
+                            self.climbing_score(p2_pieces) + self.depleting_moves_score(p1_pieces) +
+                            self.pieces_proximaty(p2_pieces))
         # print("P2 "+ str(player_two_score))
         # print("P1 "+ str(player_one_score))
         return player_two_score - player_one_score
-
-    def prevent_win_score(self, op_pi):
-        score = 0
-        board = self.get_board()
-
-        for o in op_pi:
-            spaces = board.get_spaces_around(o)
-            for s in spaces:
-                if s.get_level() == 4:
-                    score += 1000000
-
-        return score
 
     def depleting_moves_score(self, op_pi):
         score = 0
@@ -133,7 +123,7 @@ class CPU:
                 if m.get_level() == p.get_level() +1:
                     climbable_moves += 1
 
-            score += (2* (10 ** p.get_level())) * climbable_moves
+            score += (10 ** p.get_level()) * climbable_moves
 
         return score
 
@@ -149,14 +139,14 @@ class CPU:
     def climbing_score(self, pieces):
         total_score = 0
         for p in pieces:
-            total_score += pow(200, p.get_level())
+            total_score += pow(2000, p.get_level())
 
         return total_score
 
     def winning_score(self, pieces):
         for p in pieces:
             if p.get_level() == 3:
-                return 1000000000
+                return math.inf
 
         return 0
 
@@ -235,8 +225,6 @@ class CPU:
         if current_state != None:
             return current_state
 
-        all_turns = self.search_moves(p)
-
         if d == 0:
             #if  self.total_board_score() != 0:
             #print(self.total_board_score())
@@ -244,28 +232,49 @@ class CPU:
             self.add_game_state(board_score)
             return board_score
 
+        all_turns = self.search_moves(p)
+
         if len(all_turns) == 0 or self.did_oppenet_win(3-p):
-            return -10000000000000
+            new_score =  pow(-1, 3-p) * math.inf
+            return new_score
 
-        # best_turn = 0
-        for i in range(len(all_turns)):
-            current_turn = deepcopy(all_turns[i])
-            self.simulate_turn(current_turn)
-            # board = copy.deepcopy(self.get_board())
-            # self.display.display_artificial_game(board)
-            negate_flip = 1 #-pow(-1,p)
-            score = negate_flip * self.evaluate_board(d - 1, 3 - p, -beta, -alpha)
-            # print(score)
-            self.undo_turn(current_turn)
+        if p == 2:
+            score = -math.inf
+            for i in range(len(all_turns)):
+                current_turn = deepcopy(all_turns[i])
+                self.simulate_turn(current_turn)
+                # board = copy.deepcopy(self.get_board())
+                # self.display.display_artificial_game(board)
+                negate_flip = 1 #pow(-1,3-p)
 
-            if score >= beta:
-                return beta
+                score = negate_flip * self.evaluate_board(d - 1, 3 - p, alpha, beta)
 
-            # if score > alpha:
-            #     best_turn = i
-            alpha = max(score, alpha)
-        # print(f"Decided on: {all_turns[best_turn]} with a score of {alpha}")
-        return alpha
+                self.undo_turn(current_turn)
+
+                if score >= beta:
+                    return beta
+
+                alpha = max(score, alpha)
+
+            return score
+
+        else:
+            score = math.inf
+            for i in range(len(all_turns)):
+                current_turn = deepcopy(all_turns[i])
+                self.simulate_turn(current_turn)
+                # board = copy.deepcopy(self.get_board())
+                # self.display.display_artificial_game(board)
+                negate_flip = 1  # pow(-1,3-p)
+                score = negate_flip * self.evaluate_board(d - 1, 3 - p, alpha, beta)
+                self.undo_turn(current_turn)
+
+                if score <= alpha:
+                    return alpha
+
+                beta = min(score, beta)
+
+            return score
 
     def get_best_turn(self, p=2):
         """
@@ -280,6 +289,7 @@ class CPU:
         self.p2_pieces = self.get_player_pieces(2)
         poss_turns = self.search_moves(p)
         turn_count =len(poss_turns)
+
         for i in range(len(poss_turns)):
             current_turn = copy.deepcopy(poss_turns[i])
             self.simulate_turn(current_turn)
@@ -287,13 +297,14 @@ class CPU:
             # self.display.display_artificial_game(board)
             score = self.evaluate_board(self.get_depth(), (3-p), -math.inf, math.inf)
             if self.did_oppenet_win(3-p):
-                score -= 100000000000
+                score = -math.inf
             poss_turns[i].set_evaluation(score)
             self.undo_turn(current_turn)
             poss_turns[i].set_id(i+1)
-            print(str((i+1)/turn_count) + "%")
+            print(str((i+1)/turn_count * 100) + "%")
 
         decided_turn = Turn()
+        decided_turn.set_evaluation(-math.inf)
 
         for t in poss_turns:
             if t.get_evaluation() > decided_turn.get_evaluation():

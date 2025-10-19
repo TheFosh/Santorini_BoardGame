@@ -141,6 +141,9 @@ class GUI:
                     if self.AI:
                         num_count += 1
                         turn = self.Game.AI_Turn()
+                        if turn.get_move() == None:
+                            self.Game.update_game(False)
+                            break
                         p_ind = self.Game.get_player_at_spot(turn.get_piece())
                         m_sp = turn.get_move()
                         self.Game.move_player(p_ind, m_sp)
