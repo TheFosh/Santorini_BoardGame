@@ -3,6 +3,7 @@
 ## Author: Jake Swanson
 import copy
 import math
+import time
 from copy import deepcopy
 
 import numpy as np
@@ -221,9 +222,9 @@ class CPU:
         Returns: Integer representing a score of the current board.
         """
 
-        current_state = self.board_defined()
-        if current_state != None:
-            return current_state
+        # current_state = self.board_defined()
+        # if current_state != None:
+        #     return current_state
 
         if d == 0:
             #if  self.total_board_score() != 0:
@@ -290,6 +291,7 @@ class CPU:
         poss_turns = self.search_moves(p)
         turn_count =len(poss_turns)
 
+        start_time = time.time()
         for i in range(len(poss_turns)):
             current_turn = copy.deepcopy(poss_turns[i])
             self.simulate_turn(current_turn)
@@ -303,6 +305,7 @@ class CPU:
             poss_turns[i].set_id(i+1)
             print(str((i+1)/turn_count * 100) + "%")
 
+        print(f"Done in {start_time - time.time()} seconds")
         decided_turn = Turn()
         decided_turn.set_evaluation(-math.inf)
 
