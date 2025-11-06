@@ -6,15 +6,16 @@ from typing import Tuple
 from GameObjects.Board import Board
 from graphics import *
 
+from GameObjects.HashableBoard import Hashboard
 from GameObjects.Player import Player
 from GameObjects.Space import Space
 from GameObjects.Turn import Turn
 
 
 class BoardDisplay:
-        def __init__(self, _height, _width, _off, _cell_num, ai_on=False, _is_hash=False):
+        def __init__(self, _height, _width, _off, _cell_num, ai_on=False, _is_num=False):
 
-            self.IS_HASH: bool = _is_hash
+            self._IS_NUM: bool = _is_num
             self.AI: bool = ai_on
 
             self.column_count = _cell_num
@@ -45,14 +46,14 @@ class BoardDisplay:
         def get_screen_height(self):
             return self.screen_height
 
-        def get_selected_display(self, cord_spot: Space | list[int]):
+        def get_selected_display(self, chosen_x: int, chosen_y: int):
             """
             Converts given grid coordinates into display coordinates.
             Display coordinates should be centered in the chosen cell.
             """
-            display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot.getX() * (
+            display_x_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + chosen_x * (
                     self.COLUMN_WIDTH + self.column_spacing)
-            display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + cord_spot.getY() * (
+            display_y_cord = self.BOARD_PADDING + self.COLUMN_WIDTH + self.column_spacing / 2 + chosen_y * (
                     self.COLUMN_WIDTH + self.column_spacing)
 
             return Space(display_x_cord, display_y_cord)
@@ -179,22 +180,24 @@ class BoardDisplay:
             win.getMouse()
             self.window.close()
 
-        def update_player_display(self, player_index, picked_location):
+        def update_player_display(self, player_index, x, y):
             player_display = self.player_displays[player_index].getCenter()
 
             old_display_x = player_display.getX()
             old_display_y = player_display.getY()
 
-            new_display_x = self.get_selected_display(picked_location).getX()
-            new_display_y = self.get_selected_display(picked_location).getY()
+            new_display_x = self.get_selected_display(x,y).getX()
+            new_display_y = self.get_selected_display(x,y).getY()
 
             self.player_displays[player_index].move(new_display_x - old_display_x, new_display_y - old_display_y)
 
-        def update_block_display(self, picked_location, current_board: Board):
-
-            selected_space = current_board.grid[picked_location.getX()][picked_location.getY()]
-            block_index = picked_location.getY() * 5 + picked_location.getX()
-            spot_level = selected_space.get_level()
+        def update_block_display(self, x, y, current_board: Board | Hashboard):
+            selected_space: Space | list[int] = current_board.get_all_data(x,y)
+            block_index = y * 5 + x
+            if isinstance(current_board, Board):
+                spot_level = selected_space.get_level()
+            else:
+                spot_level = selected_space[3]
             if spot_level == 0:
                 self.block_displays[block_index].undraw()
 

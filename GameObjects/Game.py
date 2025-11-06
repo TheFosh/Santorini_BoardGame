@@ -19,7 +19,7 @@ class Game:
         self.HashBoard = Hashboard(_cell_num)   # HashBoard object. Used for optimized gameplay.
         self.IS_HASH = is_hash                  # Bool. Says if a hash is used or not.
         self.AI_ON = ai_on                      # Bool. Says if an AI is used or not.
-        self.game_ai = CPU(2, self.get_board())
+        self.game_ai = CPU(3, False, self.get_board())
         self.player_start_order = [1,2,2,1]     # Int Array. Gives the order in which players put their pieces on the board.
                                                     # ex: 1,2,2,1 means that p1 goes first, p2 does both next then p1 puts their last piece down.
         self.all_players = []                   # Player Array. Initialized empty. Stores all player object data.
@@ -40,14 +40,14 @@ class Game:
     def get_hashboard(self):
         return self.HashBoard
 
-    def get_player_at_spot(self, spot):
+    def get_player_at_spot(self, x, y):
         """
         Looks through all players for the correct one.
         Returns the index in which it was found. Returns -1 if none is found.
         """
         for i in range(len(self.all_players)):
             player = self.all_players[i]
-            if spot.getX() == player.getX() and spot.getY() == player.getY():
+            if x == player.getX() and y == player.getY():
                 return i
 
         return -1
@@ -90,7 +90,7 @@ class Game:
         """
         if not self.IS_HASH:
             if self.Board.valid_for_open_space(chosen_cell.getX(), chosen_cell.getY()):
-                self.Board.set_grid_player(chosen_cell, player_num)
+                self.Board.set_grid_player(chosen_cell.getX(), chosen_cell.getY(), player_num)
                 self.add_player(chosen_cell.getX(), chosen_cell.getY(), player_num)
                 return True
             else:
@@ -124,8 +124,8 @@ class Game:
         """
 
         current_player = self.all_players[player_index]
-        possible_move_locations = self.Board.get_spaces_around(current_player)
-        possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
+        possible_move_locations = self.Board.get_spaces_around(current_player.getX(), current_player.getY())
+        possible_move_locations = self.Board.move_filter(possible_move_locations, current_player.get_level())
 
         return possible_move_locations
 
@@ -151,7 +151,7 @@ class Game:
         current_player = self.all_players[player_index]
         possible_move_locations = []
         if not self.IS_HASH:
-            possible_move_locations = self.Board.get_spaces_around(current_player)
+            possible_move_locations = self.Board.get_spaces_around(current_player.getX(), current_player.getY())
         else:
             cx = current_player.getX()
             cy = current_player.getY()

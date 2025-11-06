@@ -3,6 +3,7 @@
 ## Author: Jake Swanson
 import copy
 import math
+import time
 from copy import deepcopy
 
 import numpy as np
@@ -14,7 +15,7 @@ from GameObjects.Space import Space
 from GameObjects.Turn import Turn
 
 class CPU:
-    def __init__(self, _d, board):
+    def __init__(self, _d, _is_num, board):
         self.Depth = _d              ## The depth to look into the current for
         self.insight_count = 0  ## The count of how many possible moves the AI has looked at
         self.current_board = board  ## The board to analyse
@@ -23,19 +24,27 @@ class CPU:
         self.BUILD_NUM_COUNT = 1
         self.SPACES_COUNT = 25
 
+        self.IS_NUM = _is_num
+
         self.hash_value = pow(2,28)
         self.game_states = np.zeros(self.hash_value) -1
 
-        self.p1_pieces = []
-        self.p2_pieces = []
+        self.p1_pieces: list[Space] | list[list[int]] = []
+        self.p2_pieces: list[Space] | list[list[int]] = []
         self.display = BoardDisplay(500,500, 50, 5)
 
     def get_player_pieces(self, player_num):
         pieces = []
-        for i in range(self.current_board.WIDTH):
-            for j in range(self.current_board.HEIGHT):
-                if self.current_board.grid[i][j].get_player() == player_num:
-                    pieces.append(copy.deepcopy(self.current_board.grid[i][j]))
+        if not self.IS_NUM:
+            for i in range(self.current_board.WIDTH):
+                for j in range(self.current_board.HEIGHT):
+                    if self.current_board.grid[i][j].get_player() == player_num:
+                        pieces.append(copy.deepcopy(self.current_board.grid[i][j]))
+        else:
+            for i in range(int(len(self.current_board.num_board)/2)):
+                if self.current_board.num_board[i * 2] == player_num:
+                    coords = self.current_board.get_space_from_index(i + 1)
+                    pieces.append([coords[0], coords[1], self.current_board.num_board[i*2], self.current_board.num_board[i*2+1]])
         return pieces
 
     def get_depth(self):
@@ -46,10 +55,15 @@ class CPU:
 
     def get_board_index(self) -> int:
         index = ""
-        for r in self.current_board.grid:
-            for s in r:
-                sub = str(s.get_level()) + str(s.get_player())
-                index += sub
+        current_board: Board | Hashboard = self.get_board()
+        if not self.IS_NUM:
+            for r in current_board.grid:
+                for s in r:
+                    sub = str(s.get_level()) + str(s.get_player())
+                    index += sub
+        else:
+            for n in range(current_board.num_board):
+                index += str(n)
 
         return int(index)
 
@@ -60,26 +74,38 @@ class CPU:
     def set_board(self, given_board: (Board | Hashboard)):
         self.current_board = copy.deepcopy(given_board)
 
-    def search_moves(self, relevant_player_num):
+    def search_moves(self, relevant_player_num: int):
         """
         :return: All possible turns for the pieces of the relevant player
         """
-        if relevant_player_num == 1:
-            pieces = self.p1_pieces
-        else:
-            pieces = self.p2_pieces
+        pieces = self.p1_pieces if relevant_player_num == 1 else self.p2_pieces
         all_turns = []
 
         for p in pieces:
-            if p.get_level() < 3:
-                all_moves = self.current_board.get_spaces_around(p)
-                possible_moves = self.current_board.move_filter(all_moves, p)
+            if (not self.IS_NUM and p.get_level() < 3) or (self.IS_NUM and p[3] < 3):
+                if not self.IS_NUM:
+                    px = p.getX()
+                    py = p.getY()
+                    p_level = p.get_level()
+                else:
+                    px = p[0]
+                    py = p[1]
+                    p_level = p[3]
+                all_moves = self.current_board.get_spaces_around(px,py)
+                possible_moves = self.current_board.move_filter(all_moves, p_level)
                 for m in possible_moves:
-                    self.current_board.set_grid_player(p,0)
-                    possible_builds = self.current_board.get_spaces_around(m)
+                    self.current_board.set_grid_player(px, py, 0)
+                    if not self.IS_NUM:
+                        mx = m.getX()
+                        my = m.getY()
+                    else:
+                        mx = m[0]
+                        my = m[1]
+                    possible_builds = self.current_board.get_spaces_around(mx, my)
                     for b in possible_builds:
                         all_turns.append(Turn(deepcopy(p), deepcopy(m), deepcopy(b)))
-                    self.current_board.set_grid_player(p,p.get_player())
+                    pnum = p.get_player() if not self.IS_NUM else p[2]
+                    self.current_board.set_grid_player(px, py, pnum)
             else:
                 return []
 
@@ -105,26 +131,39 @@ class CPU:
 
     def depleting_moves_score(self, op_pi):
         score = 0
-
-        for o in op_pi:
-            all_moves = self.search_moves(o.get_player())
-            score = (64 - len(all_moves)) * 5
+        if not self.IS_NUM:
+            for o in op_pi:
+                all_moves = self.search_moves(o.get_player())
+                score = (64 - len(all_moves)) * 5
+        else:
+            for o in op_pi:
+                all_moves = self.search_moves(o[2])
+                score = (64 - len(all_moves)) * 5
 
         return score
 
     def near_blocks_score(self, pieces):
         score = 0
+        if not self.IS_NUM:
+            for p in pieces:
+                all_moves = self.current_board.get_spaces_around(p.getX(), p.getY())
 
-        for p in pieces:
-            all_moves = self.current_board.get_spaces_around(p)
+                climbable_moves = 0
+                for m in all_moves:
+                    if m.get_level() == p.get_level() +1:
+                        climbable_moves += 1
 
-            climbable_moves = 0
-            for m in all_moves:
-                if m.get_level() == p.get_level() +1:
-                    climbable_moves += 1
+                score += (10 ** p.get_level()) * climbable_moves
+        else:
+            for p in pieces:
+                all_moves = self.current_board.get_spaces_around(p)
 
-            score += (10 ** p.get_level()) * climbable_moves
+                climbable_moves = 0
+                for m in all_moves:
+                    if m[3] == p[3] + 1:
+                        climbable_moves += 1
 
+                score += (10 ** p[3]) * climbable_moves
         return score
 
     def pieces_proximaty(self, pieces):
@@ -132,23 +171,47 @@ class CPU:
         piece_one = pieces[0]
         piece_two = pieces[1]
 
-        distance = int(math.sqrt((piece_one.getX() - piece_two.getX())**2 + (piece_one.getY() - piece_two.getY())**2))
+        if not self.IS_NUM:
+            x1 = piece_one.getX()
+            y1 = piece_one.getY()
+            x2 = piece_two.getX()
+            y2 = piece_two.getY()
+        else:
+            x1 = piece_one[0]
+            y1 = piece_one[1]
+            x2 = piece_two[0]
+            y2 = piece_two[1]
+
+        distance = int(math.sqrt((x1 - x2)**2 + (y1 - y2)**2))
 
         return (2 - distance) * 50
 
     def climbing_score(self, pieces):
         total_score = 0
-        for p in pieces:
-            total_score += pow(2000, p.get_level())
+        if not self.IS_NUM:
+            for p in pieces:
+                total_score += pow(2000, p.get_level())
 
-        return total_score
+            return total_score
+        else:
+            for p in pieces:
+                total_score += pow(2000, p[3])
+
+            return total_score
 
     def winning_score(self, pieces):
-        for p in pieces:
-            if p.get_level() == 3:
-                return math.inf
+        if not self.IS_NUM:
+            for p in pieces:
+                if p.get_level() == 3:
+                    return math.inf
 
-        return 0
+            return 0
+        else:
+            for p in pieces:
+                if p[3] == 3:
+                    return math.inf
+
+            return 0
 
     def simulate_turn(self, turn):
         """
@@ -162,8 +225,8 @@ class CPU:
         p = copy.deepcopy(turn.get_piece())
         m = copy.deepcopy(turn.get_move())
         b = copy.deepcopy(turn.get_build())
-        self.current_board.set_grid_player(p, 0)
-        self.current_board.set_grid_player(m, p_num)
+        self.current_board.set_grid_player(p.getX(), p.getY(), 0)
+        self.current_board.set_grid_player(m.getX(), m.getY(), p_num)
         self.current_board.build_on_space(b)
         self.update_piece(p, p_num, m)
         # print(self.p1_pieces)
@@ -174,8 +237,8 @@ class CPU:
         m = copy.deepcopy(turn.get_move())
         b = copy.deepcopy(turn.get_build())
         p_num = p.get_player()
-        self.current_board.set_grid_player(m, 0)
-        self.current_board.set_grid_player(p, p_num)
+        self.current_board.set_grid_player(m.getX(), m.getY(), 0)
+        self.current_board.set_grid_player(p.getX(), p.getY(), p_num)
         self.current_board.undo_build_on_space(b)
         self.update_piece(m, p_num, p)
 
@@ -221,9 +284,9 @@ class CPU:
         Returns: Integer representing a score of the current board.
         """
 
-        current_state = self.board_defined()
-        if current_state != None:
-            return current_state
+        # current_state = self.board_defined()
+        # if current_state != None:
+        #     return current_state
 
         if d == 0:
             #if  self.total_board_score() != 0:
@@ -290,6 +353,7 @@ class CPU:
         poss_turns = self.search_moves(p)
         turn_count =len(poss_turns)
 
+        start_time = time.time()
         for i in range(len(poss_turns)):
             current_turn = copy.deepcopy(poss_turns[i])
             self.simulate_turn(current_turn)
@@ -303,6 +367,7 @@ class CPU:
             poss_turns[i].set_id(i+1)
             print(str((i+1)/turn_count * 100) + "%")
 
+        print(f"Done in {start_time - time.time()} seconds")
         decided_turn = Turn()
         decided_turn.set_evaluation(-math.inf)
 

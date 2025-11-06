@@ -1,6 +1,7 @@
 ## Object representing the board of spaces in a game as a binary number ##
 ##########################################################################
 ## Author: Jake Swanson
+import math
 from array import ArrayType
 
 import numpy as np
@@ -30,11 +31,9 @@ class Hashboard:
     ###########################################
     ########### GETTERS & SETTERS #############
     ###########################################
-    def get_chosen_grid_space(self, chosen_space: list[int]) -> list[int]:
-        """Given a Space, the corresponding Space data in the 'grid' is returned"""
-        x = chosen_space[0]
-        y = chosen_space[1]
-        return self.get_all_data(x, y)
+    def get_chosen_grid_space(self, chosen_x: int, chosen_y: int) -> list[int]:
+        """Given a list of cords, the corresponding Space data in the 'grid' is returned"""
+        return self.get_all_data(chosen_x, chosen_y)
 
     def get_dimensions(self) -> int:
         return self.dimensions
@@ -55,8 +54,12 @@ class Hashboard:
         return self.info_digits * (_x + _y * self.dimensions)
 
     def get_space_from_index(self, _ind: int) -> [int]:
-        x: int = _ind % self.dimensions
-        y: int = _ind / self.dimensions
+        """
+        Behaves as if the index is only from 1 - 25.
+        An index represents a spot for ALL player info.
+        """
+        x: int = (_ind -1) % self.dimensions
+        y: int = math.floor((_ind - 1) / self.dimensions)
 
         return [x,y]
 
@@ -74,7 +77,7 @@ class Hashboard:
 
         """
         index: int = int(self.get_array_location(_x, _y)) + _b # +_b for the build/player location
-        return self.num_board[index]
+        return int(self.num_board[index])
 
     def get_all_data(self, _x: int, _y: int) -> list[int]:
         p_index: int = self.get_array_location(_x, _y)
@@ -97,6 +100,8 @@ class Hashboard:
         build_index: int = self.get_array_location(_x, _y) + _b # +_b for the build/player location
         self.num_board[build_index] = _d
 
+    def set_grid_player(self, x, y, player_num):
+        self.set_data(x, y, 0, player_num)
 
     #=========================================#
     def is_space_on_board(self, _x: int, _y: int) -> bool:
@@ -129,17 +134,15 @@ class Hashboard:
                 self.get_data(_x, _y, 0) == 0 and
                 self.get_data(_x, _y, 1) < 4)
 
-    def get_spaces_around(self, starting_location) -> list[list[int]]:
+    def get_spaces_around(self, center_x, center_y) -> list[list[int]]:
         """
     `   Given a Space representing the starting location of a Player,
         all Integers representing spaces around that spot in the 'num_board' are returned in an Array object.
         """
         possible_locations = []
-        center_x = starting_location.getX()
-        center_y = starting_location.getY()
 
         center = int(self.get_array_location(center_x, center_y) / 2) + 1
-        print(center)
+
         operations = [6,5,4,1,-1,-4,-5,-6]
 
         for o in operations:
@@ -154,16 +157,16 @@ class Hashboard:
                 continue
             index_spot = center + o
             array_spot = self.get_space_from_index(index_spot)
-            possible_locations.append(array_spot)
+            if self.valid_for_open_space(array_spot[0], array_spot[1]):
+                possible_locations.append(array_spot)
 
         return possible_locations
 
-    def move_filter(self, possible_spots: list[list[int]], starting_location):
+    def move_filter(self, possible_spots: list[list[int]], starting_level: int):
         """
 
         """
         filtered_list = []
-        starting_level = starting_location.get_level()
         for spot in possible_spots:
             height = self.get_data(spot[0],spot[1], 1)
             if self.is_too_tall(height , starting_level):
@@ -177,28 +180,28 @@ class Hashboard:
         selected_level = _h
         return selected_level <= center_level or center_level + 1 == selected_level
 
-    def update_player_space(self, player: Space, new_spot: Space) -> None:
+    def update_player_space(self, player: list[int], new_spot: list[int]) -> None:
         """
 
         """
-        ox = player.getX()
-        oy = player.getY()
-        self.set_data(ox,oy,0, 0)
+        ox = player[0]
+        oy = player[1]
+        self.set_data(ox, oy,0, 0)
 
-        nx = new_spot.getX()
-        ny = new_spot.getY()
-        pn = new_spot.get_player()
+        nx = new_spot[0]
+        ny = new_spot[1]
+        pn = player[2]
         self.set_data(nx, ny, 0, pn)
 
-    def build_on_space(self, picked_space:Space) -> bool:
+    def build_on_space(self, picked_space:list[int]) -> bool:
         """
         Calls 'build_level' function at the given Space in the 'grid'.
         """
-        if picked_space.level < 4:
-            x = picked_space.getX()
-            y = picked_space.getY()
+        if picked_space[3] < 4:
+            x = picked_space[0]
+            y = picked_space[1]
             current_level = self.get_data(x, y, 1)
             self.set_data(x, y, 1, current_level + 1)
 
-        return picked_space.level < 4
+        return picked_space[3] < 4
 

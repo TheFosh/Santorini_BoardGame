@@ -16,9 +16,10 @@ class NumGame:
         self.Board = Hashboard(_cell_num)
 
         self.AI_ON = ai_on
+        self.game_ai = CPU(2, True, self.get_board())
 
         self.player_start_order = [1,2,2,1]
-        self.all_players = []
+        self.all_players: list[list[int]] = []
 
         self.game_state = True
 
@@ -36,7 +37,7 @@ class NumGame:
         """
         return self.Board
 
-    def get_player_at_spot(self, spot: list[int]) -> int:
+    def get_player_at_spot(self, x: int, y: int) -> int:
         """
             Looks through the player list to find if there is a player at the given spot. If so, the index of that player is returned.
 
@@ -47,12 +48,12 @@ class NumGame:
         """
         for i in range(len(self.all_players)):
             player = self.all_players[i]
-            if spot[0] == player.getX() and spot[1] == player.getY():
+            if x == player[0] and y == player[1]:
                 return i
 
         return -1
 
-    def get_player_at_index(self, player_index: int) -> Player:
+    def get_player_at_index(self, player_index: int) -> list[int]:
         """
         Returns: player object from 'all_players' from the given index.
         """
@@ -77,12 +78,12 @@ class NumGame:
         y = chosen_cell[1]
         if self.Board.valid_for_open_space(x, y):
             self.Board.set_data(x, y, 0, player_num)
-            self.add_player(x, y, player_num)
+            self.add_player(x, y, 0, player_num)
             return True
         else:
             return False
 
-    def add_player(self, x:int , y:int, l:int ) -> None:
+    def add_player(self, x:int , y:int, l:int, n:int) -> None:
         """
         Given the parameters of a Player object, one is created
         and added to the 'all_players' array.
@@ -93,23 +94,22 @@ class NumGame:
             l: Label of the Player object to be.
         """
 
-        current_player = Player(x,y,l)
+        current_player = [x,y,n,l]
         self.all_players.append(current_player)
 
-    def get_move_spots(self, player_index: int) -> list[Space]:
+    def get_move_spots(self, player_index: int) -> list[list[int]]:
         """
         Given an integer for a Player object in 'all_players',
         Space's around that Player are returned following legal move rules.
         """
 
         current_player = self.all_players[player_index]
-        possible_move_locations = []
-        possible_move_locations = self.Board.get_spaces_around(current_player)
-        possible_move_locations = self.Board.move_filter(possible_move_locations, current_player)
+        possible_move_locations = self.Board.get_spaces_around(current_player[0], current_player[1])
+        possible_move_locations = self.Board.move_filter(possible_move_locations, current_player[2])
 
         return possible_move_locations
 
-    def move_player(self, player_index: int, picked_location: Space) -> None:
+    def move_player(self, player_index: int, picked_location: list[int]) -> None:
         """
         Moves the Player indexed with the given parameter
         to a given Space in the 'Board' object data.
@@ -120,27 +120,32 @@ class NumGame:
         self.Board.update_player_space(current_player, picked_location)
 
         # Player in 'all_players' gets updated as well.
-        self.all_players[player_index].set_cords(picked_location.getX(), picked_location.getY())
-        self.all_players[player_index].set_level(picked_location.get_level())
+        self.all_players[player_index][0] = picked_location[0] # X pos
+        self.all_players[player_index][1] = picked_location[1] # Y pos
+        self.all_players[player_index][3] = int(picked_location[3]) # level
         # Checks if the game is over or not.
-        if current_player.get_level() == 3:
+        print(self.all_players)
+        if current_player[3] == 3:
             self.game_state = False
 
     def get_build_spots(self, player_index: int) -> list[list[int]]:
         """
         Finds all spots around the indexed Player given for possible builds.
         """
+        print(self.all_players)
         current_player = self.all_players[player_index]
         possible_move_locations = []
-        possible_move_locations = self.Board.get_spaces_around(current_player)
+        x = current_player[0]
+        y = current_player[1]
+        possible_move_locations = self.Board.get_spaces_around(x,y)
         return possible_move_locations
 
-    def spot_in_list(self, picked:Space, options:list[Space]) -> bool:
+    def spot_in_list(self, picked:list[int], options:list[list[int]]) -> bool:
         """
         Checks if the 'picked' Space is among the given list of possible Space's in 'options'.
         """
         for i in range(len(options)):
-            if picked.getX() == options[i].getX() and picked.getY() == options[i].getY():
+            if picked[0] == options[i][0] and picked[1] == options[i][1]:
                 return True
         return False
 
@@ -150,17 +155,18 @@ class NumGame:
         """
         self.Board.build_on_space(picked_location)
 
-    def AI_Turn(self, cpu: CPU) -> Turn:
+    def AI_Turn(self) -> Turn:
         """
-        Given a CPU(AI), the game is simulated to have a turn taken as if someone decided
-        a turn for the game.
-        """
-        cur_board = self.get_board()
-        CPU.set_board(cur_board)
-        decided_turn = CPU.get_best_turn()
-        p = decided_turn.get_piece()    # Player object chosen.
-        m = decided_turn.get_move()     # Space to move to.
-        b = decided_turn.get_build()    # Space to build on.
+               Given a CPU(AI), the game is simulated to have a turn taken as if someone decided
+               a turn for the game.
+               """
+        self.game_ai.set_board(self.get_board())
+
+        pieces: list[Space] | list[list[int]] = [self.get_player_at_index(0), self.get_player_at_index(3)]
+
+        self.game_ai.update_all_pieces(pieces, 1)
+        decided_turn = self.game_ai.get_best_turn()
+        self.game_ai.update_all_pieces(pieces, 2)
 
         return decided_turn
 

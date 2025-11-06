@@ -23,9 +23,9 @@ class Board:
     def get_dimensions(self):
         return self.WIDTH
 
-    def get_chosen_grid_space(self, chosen_space: Space):
+    def get_chosen_grid_space(self, chosen_x: int, chosen_y: int) -> Space:
         """Given a Space, the corresponding Space data in the 'grid' is returned"""
-        return self.grid[chosen_space.getX()][chosen_space.getY()]
+        return self.grid[chosen_x][chosen_y]
 
     def get_all_blocks(self) -> list[Space]:
         blocks = []
@@ -45,9 +45,12 @@ class Board:
                     players.append(copy.deepcopy(p))
         return players
 
-    def set_grid_player(self, chosen_space: Space, player_num: int):
+    def get_all_data(self, x, y):
+        return self.grid[x][y]
+
+    def set_grid_player(self, x, y, player_num: int):
         """Sets the given Space in the 'grid' to be the given 'player_num'."""
-        self.grid[chosen_space.getX()][chosen_space.getY()].set_player(player_num)
+        self.grid[x][y].set_player(player_num)
     ########################################
 
     def same_board(self, check_board):
@@ -97,14 +100,14 @@ class Board:
         selected_level = spot.get_level()
         return selected_level <= center_level or center_level + 1 == selected_level
 
-    def get_spaces_around(self, starting_location):
+    def get_spaces_around(self, starting_x, starting_y):
         """
     `   Given a Space representing the starting location of a Player,
         all Space's around that spot in the 'grid' are returned in an Array object.
         """
         possible_locations = []
-        starting_x = starting_location.getX() + 1
-        starting_y = starting_location.getY() + 1
+        starting_x = starting_x + 1
+        starting_y = starting_y + 1
 
         RANGE_AROUND_POINT = 8
         for i in range(RANGE_AROUND_POINT):
@@ -125,13 +128,12 @@ class Board:
 
         return possible_locations
 
-    def move_filter(self, possible_spots, starting_location):
+    def move_filter(self, possible_spots, starting_level):
         """
         Given an Array of Spaces and a starting Space, a new Array of Spaces
         is created that represent valid movement spots for a Player.
         """
         filtered_list = []
-        starting_level = starting_location.get_level()
         for spot in possible_spots:
             if self.is_too_tall(spot, starting_level):
                 filtered_list.append(spot)
